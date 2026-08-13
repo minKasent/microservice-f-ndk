@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="content-data-0001-insert-default-categories" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="category"/>
+    </preConditions>
+
+    <insert tableName="category">
+      <column name="name" value="Programming"/>
+      <column name="description" value="Programming languages and software development"/>
+      <column name="slug" value="programming"/>
+    </insert>
+
+    <insert tableName="category">
+      <column name="name" value="Web Development"/>
+      <column name="description" value="Frontend, Backend, and Full-stack web development"/>
+      <column name="slug" value="web-development"/>
+    </insert>
+
+    <insert tableName="category">
+      <column name="name" value="Data Science"/>
+      <column name="description" value="Data analysis, machine learning, and AI"/>
+      <column name="slug" value="data-science"/>
+    </insert>
+
+    <insert tableName="category">
+      <column name="name" value="DevOps"/>
+      <column name="description" value="CI/CD, Docker, Kubernetes, and cloud platforms"/>
+      <column name="slug" value="devops"/>
+    </insert>
+
+    <insert tableName="category">
+      <column name="name" value="Mobile Development"/>
+      <column name="description" value="iOS, Android, and cross-platform mobile apps"/>
+      <column name="slug" value="mobile-development"/>
+    </insert>
+
+    <insert tableName="category">
+      <column name="name" value="Database"/>
+      <column name="description" value="SQL, NoSQL, and database design"/>
+      <column name="slug" value="database"/>
+    </insert>
+
+  </changeSet>
+
+</databaseChangeLog>

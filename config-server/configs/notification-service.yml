@@ -1,0 +1,81 @@
+spring:
+  # MongoDB (Boot 4 uses spring.mongodb.*; keep auto-index under spring.data.mongodb)
+  mongodb:
+    uri: ${MONGO_DB_URI}
+  data:
+    mongodb:
+      auto-index-creation: true
+
+  # MySQL (event log metadata)
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      compression-type: snappy
+      batch-size: 16384
+      linger-ms: 10
+    consumer:
+      group-id: notification-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+      enable-auto-commit: false
+      max-poll-records: 500
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: manual
+
+  security:
+    oauth2:
+      resource-server:
+        jwt:
+          issuer-uri: http://localhost:8001
+
+basic:
+  credentials:
+    username: ${BASIC_CREDENTIALS_USER}
+    password: ${BASIC_CREDENTIALS_PASSWORD}
+
+notification:
+  kafka:
+    topic:
+      partitions: 3
+      replicas: 1
+
+# Resilience4j Rate Limiter Configuration
+resilience4j:
+  ratelimiter:
+    instances:
+      sms:
+        limit-for-period: 1000
+        limit-refresh-period: 1s
+        timeout-duration: 0
+      email:
+        limit-for-period: 500
+        limit-refresh-period: 1s
+        timeout-duration: 0
+      webapp:
+        limit-for-period: 2000
+        limit-refresh-period: 1s
+        timeout-duration: 0

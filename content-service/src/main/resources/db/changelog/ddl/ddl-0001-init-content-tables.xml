@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!-- 1. Create category table -->
+  <changeSet id="content-0001-create-category-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="category"/></not>
+    </preConditions>
+    <createTable tableName="category">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="VARCHAR(100)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="description" type="VARCHAR(500)"/>
+      <column name="slug" type="VARCHAR(50)"/>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="category" indexName="idx_category_slug">
+      <column name="slug"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- 2. Create content table -->
+  <changeSet id="content-0002-create-content-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="content"/></not>
+    </preConditions>
+    <createTable tableName="content">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="title" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="TEXT"/>
+      <column name="creator_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="category_id" type="BIGINT UNSIGNED"/>
+      <column name="status" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="level" type="VARCHAR(20)"/>
+      <column name="price" type="DECIMAL(10, 2)"/>
+      <column name="thumbnail" type="VARCHAR(255)"/>
+      <column name="view_count" type="BIGINT" defaultValueNumeric="0"/>
+      <column name="purchase_count" type="BIGINT" defaultValueNumeric="0"/>
+      <column name="published_at" type="TIMESTAMP"/>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="content"
+        baseColumnNames="category_id"
+        constraintName="fk_content_category"
+        referencedTableName="category"
+        referencedColumnNames="id"
+        onDelete="SET NULL"/>
+    <createIndex tableName="content" indexName="idx_content_creator_id">
+      <column name="creator_id"/>
+    </createIndex>
+    <createIndex tableName="content" indexName="idx_content_status">
+      <column name="status"/>
+    </createIndex>
+    <createIndex tableName="content" indexName="idx_content_title">
+      <column name="title"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- 3. Create chapter table -->
+  <changeSet id="content-0003-create-chapter-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="chapter"/></not>
+    </preConditions>
+    <createTable tableName="chapter">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="content_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="title" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="TEXT"/>
+      <column name="display_order" type="INT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="chapter"
+        baseColumnNames="content_id"
+        constraintName="fk_chapter_content"
+        referencedTableName="content"
+        referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <createIndex tableName="chapter" indexName="idx_chapter_content_id">
+      <column name="content_id"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- 4. Create section table -->
+  <changeSet id="content-0004-create-section-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="section"/></not>
+    </preConditions>
+    <createTable tableName="section">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="chapter_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="title" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="content" type="LONGTEXT"/>
+      <column name="display_order" type="INT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="is_free" type="BOOLEAN" defaultValueBoolean="false"/>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="section"
+        baseColumnNames="chapter_id"
+        constraintName="fk_section_chapter"
+        referencedTableName="chapter"
+        referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <createIndex tableName="section" indexName="idx_section_chapter_id">
+      <column name="chapter_id"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- 5. Create content_review table -->
+  <changeSet id="content-0005-create-content-review-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="content_review"/></not>
+    </preConditions>
+    <createTable tableName="content_review">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="content_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="moderator_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="feedback" type="TEXT"/>
+      <column name="reviewed_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="content_review"
+        baseColumnNames="content_id"
+        constraintName="fk_content_review_content"
+        referencedTableName="content"
+        referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <createIndex tableName="content_review" indexName="idx_content_review_content_id">
+      <column name="content_id"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- 6. Create purchase table -->
+  <changeSet id="content-0006-create-purchase-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="purchase"/></not>
+    </preConditions>
+    <createTable tableName="purchase">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="content_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="consumer_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="price" type="DECIMAL(10, 2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="purchased_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="transaction_id" type="VARCHAR(255)"/>
+    </createTable>
+    <addForeignKeyConstraint
+        baseTableName="purchase"
+        baseColumnNames="content_id"
+        constraintName="fk_purchase_content"
+        referencedTableName="content"
+        referencedColumnNames="id"
+        onDelete="CASCADE"/>
+    <createIndex tableName="purchase" indexName="idx_purchase_consumer_id">
+      <column name="consumer_id"/>
+    </createIndex>
+    <createIndex tableName="purchase" indexName="idx_purchase_content_id">
+      <column name="content_id"/>
+    </createIndex>
+    <createIndex tableName="purchase" indexName="idx_purchase_consumer_content" unique="true">
+      <column name="consumer_id"/>
+      <column name="content_id"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

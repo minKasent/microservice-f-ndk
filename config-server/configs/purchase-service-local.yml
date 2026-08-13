@@ -1,0 +1,12 @@
+DB_URL: jdbc:mysql://localhost:3306/purchase_service
+DB_USER: root
+DB_PASSWORD: root
+
+API_DOCS_OAUTH2_AUTH_URL: http://localhost:8001/oauth2/authorize
+API_DOCS_OAUTH2_TOKEN_URL: http://localhost:8001/oauth2/token
+API_DOCS_SERVER: http://localhost:8888/purchase
+
+API_DOCS_SECURITY_BASIC_USER: docs
+API_DOCS_SECURITY_BASIC_PASSWORD: docs
+
+API_DOCS_SECURITY_ENABLED: false

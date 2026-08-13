@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0001-create-user-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="user"/>
+      </not>
+    </preConditions>
+    <createTable tableName="user">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="username" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="email" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="password" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="firstname" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="lastname" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="phone_number" type="VARCHAR(15)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(15)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="ddl-0001-create-role-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="role"/>
+      </not>
+    </preConditions>
+    <createTable tableName="role">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="role_name" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="ddl-0001-create-user-role-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="user_role"/>
+      </not>
+    </preConditions>
+    <createTable tableName="user_role">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="role_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="ddl-0001-create-user-verification-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="user_verification"/>
+      </not>
+    </preConditions>
+    <createTable tableName="user_verification">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="verification_code" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="expired_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="channel" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="verifi_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="receiver" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="ddl-0001-create-user-profile-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="user_profile"/>
+      </not>
+    </preConditions>
+    <createTable tableName="user_profile">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="birthday" type="DATE">
+        <constraints nullable="false"/>
+      </column>
+      <column name="gender" type="VARCHAR(10)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="address" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="bio" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="avartar" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="company" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="year_of_experience" type="TINYINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="education_level" type="TINYINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="linkedin" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="facebook" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="personal_website" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false" unique="true" uniqueConstraintName="uk_user_profile_user_id"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="ddl-0001-create-user-skill-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="user_skill"/>
+      </not>
+    </preConditions>
+    <createTable tableName="user_skill">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="skill_name" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="proficiency_level" type="TINYINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="year_of_experience" type="TINYINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="profile_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="ddl-0001-create-user-interest-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="user_interest"/>
+      </not>
+    </preConditions>
+    <createTable tableName="user_interest">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="interest_name" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="interest_level" type="TINYINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="profile_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+</databaseChangeLog>

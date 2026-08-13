@@ -1,0 +1,21 @@
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_URI}
+  instance:
+    prefer-ip-address: true
+
+logging:
+  loki:
+    url: ${LOKI_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,info
+  metrics:
+    tags:
+      application: ${spring.application.name}

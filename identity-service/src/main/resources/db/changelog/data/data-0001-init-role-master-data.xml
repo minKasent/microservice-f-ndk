@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="data-0001-insert-role-consumer" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM role WHERE role_name = 'CONSUMER'
+      </sqlCheck>
+    </preConditions>
+    <insert tableName="role">
+      <column name="role_name" value="CONSUMER"/>
+      <column name="description" value="Standard consumer user"/>
+    </insert>
+  </changeSet>
+
+  <changeSet id="data-0001-insert-role-creator" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM role WHERE role_name = 'CREATOR'
+      </sqlCheck>
+    </preConditions>
+    <insert tableName="role">
+      <column name="role_name" value="CREATOR"/>
+      <column name="description" value="Content creator user"/>
+    </insert>
+  </changeSet>
+
+  <changeSet id="data-0001-insert-role-admin" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM role WHERE role_name = 'ADMIN'
+      </sqlCheck>
+    </preConditions>
+    <insert tableName="role">
+      <column name="role_name" value="ADMIN"/>
+      <column name="description" value="System administrator"/>
+    </insert>
+  </changeSet>
+
+  <changeSet id="data-0001-insert-role-moderator" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM role WHERE role_name = 'MODERATOR'
+      </sqlCheck>
+    </preConditions>
+    <insert tableName="role">
+      <column name="role_name" value="MODERATOR"/>
+      <column name="description" value="Content moderator"/>
+    </insert>
+  </changeSet>
+
+</databaseChangeLog>

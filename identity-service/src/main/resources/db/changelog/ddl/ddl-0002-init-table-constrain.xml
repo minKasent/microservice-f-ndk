@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0002-add-foreign-keys" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <and>
+        <tableExists tableName="user"/>
+        <tableExists tableName="role"/>
+        <tableExists tableName="user_role"/>
+        <tableExists tableName="user_profile"/>
+        <tableExists tableName="user_verification"/>
+        <tableExists tableName="user_skill"/>
+        <tableExists tableName="user_interest"/>
+      </and>
+    </preConditions>
+    <addForeignKeyConstraint
+      baseTableName="user_role"
+      baseColumnNames="role_id"
+      referencedTableName="role"
+      referencedColumnNames="id"
+      constraintName="user_role_role_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="user_profile"
+      baseColumnNames="user_id"
+      referencedTableName="user"
+      referencedColumnNames="id"
+      constraintName="user_profile_user_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="user_verification"
+      baseColumnNames="user_id"
+      referencedTableName="user"
+      referencedColumnNames="id"
+      constraintName="user_verification_user_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="user_interest"
+      baseColumnNames="profile_id"
+      referencedTableName="user_profile"
+      referencedColumnNames="id"
+      constraintName="user_interest_profile_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="user_role"
+      baseColumnNames="user_id"
+      referencedTableName="user"
+      referencedColumnNames="id"
+      constraintName="user_role_user_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="user_skill"
+      baseColumnNames="profile_id"
+      referencedTableName="user_profile"
+      referencedColumnNames="id"
+      constraintName="user_skill_profile_id_foreign"/>
+  </changeSet>
+
+</databaseChangeLog>

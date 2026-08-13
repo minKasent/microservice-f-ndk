@@ -1,0 +1,15 @@
+API_DOCS_OAUTH2_AUTH_URL: http://localhost:8001/oauth2/authorize
+API_DOCS_OAUTH2_TOKEN_URL: http://localhost:8001/oauth2/token
+API_DOCS_SERVER: http://localhost:8888/credit
+
+API_DOCS_SECURITY_BASIC_USER: docs
+API_DOCS_SECURITY_BASIC_PASSWORD: docs
+
+DB_URL: jdbc:mysql://localhost:3306/credit_service?createDatabaseIfNotExist=true
+DB_USER: root
+DB_PASSWORD: root
+
+BASIC_CREDENTIALS_USER: user
+BASIC_CREDENTIALS_PASSWORD: password
+
+API_DOCS_SECURITY_ENABLED: false

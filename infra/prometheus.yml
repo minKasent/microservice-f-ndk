@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  # Docker Desktop (Windows/Mac): host.docker.internal → máy host chạy API Gateway :8888
+  - job_name: 'identity-service'
+    metrics_path: '/identity/actuator/prometheus'
+    static_configs:
+      - targets: [ 'host.docker.internal:8888' ]
+
+  - job_name: 'content-service'
+    metrics_path: '/content/actuator/prometheus'
+    static_configs:
+      - targets: [ 'host.docker.internal:8888' ]
+
+  - job_name: 'credit-service'
+    metrics_path: '/credit/actuator/prometheus'
+    static_configs:
+      - targets: [ 'host.docker.internal:8888' ]
+
+  - job_name: 'notification-service'
+    metrics_path: '/notification/actuator/prometheus'
+    static_configs:
+      - targets: [ 'host.docker.internal:8888' ]
+
+  - job_name: 'purchase-service'
+    metrics_path: '/purchase/actuator/prometheus'
+    static_configs:
+      - targets: [ 'host.docker.internal:8888' ]

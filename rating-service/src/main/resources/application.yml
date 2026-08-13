@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: rating-service
+  profiles:
+    active: local,swagger,loki
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      uri: http://localhost:6969
+      request-connect-timeout: 5000
+      request-read-timeout: 5000
+      fail-fast: false
+
+server:
+  port: 8005

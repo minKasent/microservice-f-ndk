@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!-- Drop old chapter and section tables -->
+  <changeSet id="content-0007-drop-section-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="section"/>
+    </preConditions>
+    <dropTable tableName="section" cascadeConstraints="true"/>
+  </changeSet>
+
+  <changeSet id="content-0008-drop-chapter-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="chapter"/>
+    </preConditions>
+    <dropTable tableName="chapter" cascadeConstraints="true"/>
+  </changeSet>
+
+  <!-- Create new content_block table (Notion-like) -->
+  <changeSet id="content-0009-create-content-block-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="content_block"/></not>
+    </preConditions>
+    <createTable tableName="content_block">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="content_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="parent_block_id" type="BIGINT UNSIGNED">
+        <constraints nullable="true"/>
+      </column>
+      <column name="type" type="VARCHAR(30)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="text_content" type="LONGTEXT"/>
+      <column name="properties" type="JSON"/>
+      <column name="position" type="INT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="is_free" type="BOOLEAN" defaultValueBoolean="false"/>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <!-- Foreign key to content -->
+    <addForeignKeyConstraint
+        baseTableName="content_block"
+        baseColumnNames="content_id"
+        constraintName="fk_content_block_content"
+        referencedTableName="content"
+        referencedColumnNames="id"
+        onDelete="CASCADE"/>
+
+    <!-- Self-referencing foreign key for parent block -->
+    <addForeignKeyConstraint
+        baseTableName="content_block"
+        baseColumnNames="parent_block_id"
+        constraintName="fk_content_block_parent"
+        referencedTableName="content_block"
+        referencedColumnNames="id"
+        onDelete="CASCADE"/>
+
+    <!-- Indexes -->
+    <createIndex tableName="content_block" indexName="idx_content_block_content_id">
+      <column name="content_id"/>
+    </createIndex>
+
+    <createIndex tableName="content_block" indexName="idx_content_block_parent_id">
+      <column name="parent_block_id"/>
+    </createIndex>
+
+    <createIndex tableName="content_block" indexName="idx_content_block_position">
+      <column name="position"/>
+    </createIndex>
+
+    <createIndex tableName="content_block" indexName="idx_content_block_type">
+      <column name="type"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

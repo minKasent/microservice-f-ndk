@@ -1,0 +1,12 @@
+# OpenTelemetry Java Agent → Tempo (OTLP gRPC :4317)
+# Copy các dòng -D... vào IntelliJ Run Configuration → VM options
+# (đổi service.name theo từng service)
+
+-javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar
+-Dotel.service.name=purchase-service
+-Dotel.exporter.otlp.endpoint=http://localhost:4317
+-Dotel.exporter.otlp.protocol=grpc
+-Dotel.traces.exporter=otlp
+-Dotel.metrics.exporter=none
+-Dotel.logs.exporter=none
+-Dotel.propagators=tracecontext,baggage

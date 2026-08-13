@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  
+  <!-- DDL -->
+  <include file="db/changelog/ddl/ddl-0001-init-user-profile.xml"/>
+  <include file="db/changelog/ddl/ddl-0002-init-table-constrain.xml"/>
+  <include file="db/changelog/ddl/ddl-0003-alter-role-name.xml"/>
+  <include file="db/changelog/ddl/ddl-0004-drop-not-null-constraints.xml"/>
+  <include file="db/changelog/ddl/ddl-0005-modify-user-status.xml"/>
+  <include file="db/changelog/ddl/ddl-0006-add-not-null-user-status.xml"/>
+  <include file="db/changelog/ddl/ddl-0007-drop-role-audit-columns.xml"/>
+  <include file="db/changelog/ddl/ddl-0008-init-oauth2-clients.xml"/>
+  <include file="db/changelog/ddl/ddl-0009-drop-not-null-verifi-at.xml"/>
+  <include file="db/changelog/ddl/ddl-0010-create-creator-application-table.xml"/>
+  <include file="db/changelog/ddl/ddl-0011-add-post-logout-redirect-uris.xml"/>
+
+  <!-- DATA  -->
+  <include file="db/changelog/data/data-0001-init-role-master-data.xml"/>
+
+</databaseChangeLog>

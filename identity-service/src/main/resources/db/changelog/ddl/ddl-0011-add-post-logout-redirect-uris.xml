@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="ddl-0011-add-post-logout-redirect-uris" author="khoand01">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="oauth2_client_post_logout_redirect_uris"/>
+      </not>
+    </preConditions>
+
+    <comment>Add post_logout_redirect_uris table for OAuth2 clients</comment>
+
+    <createTable tableName="oauth2_client_post_logout_redirect_uris">
+      <column name="client_id" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="post_logout_redirect_uri" type="VARCHAR(500)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addForeignKeyConstraint
+        baseTableName="oauth2_client_post_logout_redirect_uris"
+        baseColumnNames="client_id"
+        constraintName="fk_post_logout_redirect_uris_client"
+        referencedTableName="oauth2_clients"
+        referencedColumnNames="id"
+        onDelete="CASCADE"/>
+
+    <createIndex indexName="idx_post_logout_redirect_uris_client_id"
+                 tableName="oauth2_client_post_logout_redirect_uris">
+      <column name="client_id"/>
+    </createIndex>
+
+  </changeSet>
+
+</databaseChangeLog>

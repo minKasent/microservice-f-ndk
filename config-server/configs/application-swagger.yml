@@ -1,0 +1,14 @@
+springdoc:
+  swagger-ui:
+    oauth:
+      use-basic-authentication-with-access-code-grant: true
+api-docs:
+  oauth2:
+    authorization-url: ${API_DOCS_OAUTH2_AUTH_URL}
+    token-url: ${API_DOCS_OAUTH2_TOKEN_URL}
+  server: ${API_DOCS_SERVER}
+  security:
+    enabled: ${API_DOCS_SECURITY_ENABLED:true}
+    basic:
+      username: ${API_DOCS_SECURITY_BASIC_USER}
+      password: ${API_DOCS_SECURITY_BASIC_PASSWORD}

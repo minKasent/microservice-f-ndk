@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0004-drop-not-null-user-optional-columns" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <tableExists tableName="user"/>
+    </preConditions>
+    <dropNotNullConstraint tableName="user" columnName="firstname" columnDataType="VARCHAR(50)"/>
+    <dropNotNullConstraint tableName="user" columnName="lastname" columnDataType="VARCHAR(50)"/>
+    <dropNotNullConstraint tableName="user" columnName="phone_number" columnDataType="VARCHAR(15)"/>
+    <dropNotNullConstraint tableName="user" columnName="status" columnDataType="VARCHAR(15)"/>
+  </changeSet>
+
+  <changeSet id="ddl-0004-drop-not-null-audit-columns" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <and>
+        <tableExists tableName="user"/>
+        <tableExists tableName="role"/>
+        <tableExists tableName="user_role"/>
+        <tableExists tableName="user_verification"/>
+        <tableExists tableName="user_profile"/>
+        <tableExists tableName="user_skill"/>
+        <tableExists tableName="user_interest"/>
+      </and>
+    </preConditions>
+
+    <dropNotNullConstraint tableName="user" columnName="created_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user" columnName="updated_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user" columnName="created_by" columnDataType="BIGINT"/>
+    <dropNotNullConstraint tableName="user" columnName="updated_by" columnDataType="BIGINT"/>
+
+    <dropNotNullConstraint tableName="role" columnName="created_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="role" columnName="updated_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="role" columnName="created_by" columnDataType="BIGINT"/>
+    <dropNotNullConstraint tableName="role" columnName="updated_by" columnDataType="BIGINT"/>
+
+    <dropNotNullConstraint tableName="user_role" columnName="created_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_role" columnName="updated_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_role" columnName="created_by" columnDataType="BIGINT"/>
+    <dropNotNullConstraint tableName="user_role" columnName="updated_by" columnDataType="BIGINT"/>
+
+    <dropNotNullConstraint tableName="user_verification" columnName="created_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_verification" columnName="updated_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_verification" columnName="created_by" columnDataType="BIGINT"/>
+    <dropNotNullConstraint tableName="user_verification" columnName="updated_by" columnDataType="BIGINT"/>
+
+    <dropNotNullConstraint tableName="user_profile" columnName="created_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_profile" columnName="updated_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_profile" columnName="created_by" columnDataType="BIGINT"/>
+    <dropNotNullConstraint tableName="user_profile" columnName="updated_by" columnDataType="BIGINT"/>
+
+    <dropNotNullConstraint tableName="user_skill" columnName="created_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_skill" columnName="updated_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_skill" columnName="created_by" columnDataType="BIGINT"/>
+    <dropNotNullConstraint tableName="user_skill" columnName="updated_by" columnDataType="BIGINT"/>
+
+    <dropNotNullConstraint tableName="user_interest" columnName="created_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_interest" columnName="updated_at" columnDataType="TIMESTAMP"/>
+    <dropNotNullConstraint tableName="user_interest" columnName="created_by" columnDataType="BIGINT"/>
+    <dropNotNullConstraint tableName="user_interest" columnName="updated_by" columnDataType="BIGINT"/>
+  </changeSet>
+
+</databaseChangeLog>

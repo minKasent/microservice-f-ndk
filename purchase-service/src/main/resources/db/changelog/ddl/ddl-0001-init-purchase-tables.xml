@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!-- Create purchase table -->
+  <changeSet id="purchase-0001-create-purchase-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="purchase"/></not>
+    </preConditions>
+    
+    <createTable tableName="purchase">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="purchase_code" type="VARCHAR(50)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="buyer_id" type="VARCHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="content_id" type="VARCHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="creator_id" type="VARCHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="content_price" type="DECIMAL(15,2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="platform_fee_rate" type="DECIMAL(5,2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="platform_fee" type="DECIMAL(15,2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="creator_commission_rate" type="DECIMAL(5,2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="creator_commission" type="DECIMAL(15,2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+        <constraints nullable="false"/>
+      </column>
+      <column name="purchased_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="completed_at" type="TIMESTAMP"/>
+    </createTable>
+
+    <createIndex tableName="purchase" indexName="idx_buyer_id">
+      <column name="buyer_id"/>
+    </createIndex>
+    <createIndex tableName="purchase" indexName="idx_content_id">
+      <column name="content_id"/>
+    </createIndex>
+    <createIndex tableName="purchase" indexName="idx_creator_id">
+      <column name="creator_id"/>
+    </createIndex>
+    <createIndex tableName="purchase" indexName="idx_status">
+      <column name="status"/>
+    </createIndex>
+    <createIndex tableName="purchase" indexName="idx_purchased_at">
+      <column name="purchased_at"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- Create user_library table -->
+  <changeSet id="purchase-0002-create-user-library-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="user_library"/></not>
+    </preConditions>
+    
+    <createTable tableName="user_library">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="VARCHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="content_id" type="VARCHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="purchase_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="access_granted_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_accessed_at" type="TIMESTAMP"/>
+      <column name="access_count" type="INT" defaultValueNumeric="0"/>
+      <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+    </createTable>
+
+    <addUniqueConstraint tableName="user_library" columnNames="user_id,content_id" constraintName="uk_user_content"/>
+
+    <addForeignKeyConstraint baseTableName="user_library" baseColumnNames="purchase_id"
+                             constraintName="fk_user_library_purchase"
+                             referencedTableName="purchase" referencedColumnNames="id"
+                             onDelete="CASCADE"/>
+
+    <createIndex tableName="user_library" indexName="idx_user_library_user_id">
+      <column name="user_id"/>
+    </createIndex>
+    <createIndex tableName="user_library" indexName="idx_user_library_content_id">
+      <column name="content_id"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- Create purchase_transaction table -->
+  <changeSet id="purchase-0003-create-transaction-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="purchase_transaction"/></not>
+    </preConditions>
+    
+    <createTable tableName="purchase_transaction">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="purchase_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="transaction_type" type="VARCHAR(30)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="user_id" type="VARCHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="amount" type="DECIMAL(15,2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="credit_transaction_id" type="VARCHAR(50)"/>
+      <column name="status" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_message" type="TEXT"/>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="completed_at" type="TIMESTAMP"/>
+    </createTable>
+
+    <addForeignKeyConstraint baseTableName="purchase_transaction" baseColumnNames="purchase_id"
+                             constraintName="fk_transaction_purchase"
+                             referencedTableName="purchase" referencedColumnNames="id"
+                             onDelete="CASCADE"/>
+
+    <createIndex tableName="purchase_transaction" indexName="idx_purchase_id">
+      <column name="purchase_id"/>
+    </createIndex>
+    <createIndex tableName="purchase_transaction" indexName="idx_transaction_type">
+      <column name="transaction_type"/>
+    </createIndex>
+    <createIndex tableName="purchase_transaction" indexName="idx_status">
+      <column name="status"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

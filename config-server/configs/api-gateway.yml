@@ -1,0 +1,69 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          global-cors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods: "*"
+                allowed-headers: "*"
+                max-age: 3600
+          routes:
+            - id: credit-service
+              uri: lb://credit-service
+              predicates:
+                - Path=/credit/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/credit/(?<segment>.*), /$\{segment}
+            - id: content-service
+              uri: lb://content-service
+              predicates:
+                - Path=/content/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/content/(?<segment>.*), /$\{segment}
+            - id: identity-service
+              uri: lb://identity-service
+              predicates:
+                - Path=/identity/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/identity/(?<segment>.*), /$\{segment}
+            - id: mentoring-service
+              uri: lb://mentoring-service
+              predicates:
+                - Path=/mentoring/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/mentoring/(?<segment>.*), /$\{segment}
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/notification/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/notification/(?<segment>.*), /$\{segment}
+            - id: purchase-service
+              uri: lb://purchase-service
+              predicates:
+                - Path=/purchase/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/purchase/(?<segment>.*), /$\{segment}
+            - id: rating-service
+              uri: lb://rating-service
+              predicates:
+                - Path=/rating/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/rating/(?<segment>.*), /$\{segment}
+            - id: reporting-service
+              uri: lb://reporting-service
+              predicates:
+                - Path=/reporting/**
+              filters:
+                - DedupeResponseHeader=Access-Control-Allow-Origin
+                - RewritePath=/reporting/(?<segment>.*), /$\{segment}

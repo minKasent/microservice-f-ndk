@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0008-create-oauth2-clients-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="oauth2_clients"/>
+      </not>
+    </preConditions>
+    <createTable tableName="oauth2_clients">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="client_id" type="VARCHAR(100)">
+        <constraints nullable="false" unique="true" uniqueConstraintName="oauth2_clients_client_id_unique"/>
+      </column>
+      <column name="client_secret" type="VARCHAR(255)"/>
+      <column name="client_name" type="VARCHAR(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="TEXT"/>
+      <column name="require_authorization_consent" type="TINYINT"/>
+      <column name="require_proof_key" type="TINYINT"/>
+      <column name="access_token_time_to_live" type="INT"/>
+      <column name="refresh_token_time_to_live" type="INT"/>
+      <column name="is_active" type="TINYINT" defaultValueNumeric="1"/>
+      <column name="created_by" type="BIGINT"/>
+      <column name="created_at" type="TIMESTAMP"/>
+      <column name="updated_at" type="TIMESTAMP"/>
+    </createTable>
+    <createIndex tableName="oauth2_clients" indexName="oauth2_clients_client_name_index">
+      <column name="client_name"/>
+    </createIndex>
+    <createIndex tableName="oauth2_clients" indexName="oauth2_clients_is_active_index">
+      <column name="is_active"/>
+    </createIndex>
+    <createIndex tableName="oauth2_clients" indexName="oauth2_clients_created_by_index">
+      <column name="created_by"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="ddl-0008-create-oauth2-client-auth-methods-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="oauth2_client_auth_methods"/>
+      </not>
+    </preConditions>
+    <createTable tableName="oauth2_client_auth_methods">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="client_id" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="auth_method" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="oauth2_client_auth_methods" indexName="oauth2_client_auth_methods_client_id_index">
+      <column name="client_id"/>
+    </createIndex>
+    <createIndex tableName="oauth2_client_auth_methods" indexName="oauth2_client_auth_methods_auth_method_index">
+      <column name="auth_method"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="ddl-0008-create-oauth2-client-grant-types-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="oauth2_client_grant_types"/>
+      </not>
+    </preConditions>
+    <createTable tableName="oauth2_client_grant_types">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="client_id" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="grant_type" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="oauth2_client_grant_types" indexName="oauth2_client_grant_types_client_id_index">
+      <column name="client_id"/>
+    </createIndex>
+    <createIndex tableName="oauth2_client_grant_types" indexName="oauth2_client_grant_types_grant_type_index">
+      <column name="grant_type"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="ddl-0008-create-oauth2-client-redirect-uris-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="oauth2_client_redirect_uris"/>
+      </not>
+    </preConditions>
+    <createTable tableName="oauth2_client_redirect_uris">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="client_id" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="redirect_uri" type="VARCHAR(500)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="oauth2_client_redirect_uris" indexName="oauth2_client_redirect_uris_client_id_index">
+      <column name="client_id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="ddl-0008-create-oauth2-client-scopes-table" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <not>
+        <tableExists tableName="oauth2_client_scopes"/>
+      </not>
+    </preConditions>
+    <createTable tableName="oauth2_client_scopes">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="client_id" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="scope" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <createIndex tableName="oauth2_client_scopes" indexName="oauth2_client_scopes_client_id_index">
+      <column name="client_id"/>
+    </createIndex>
+    <createIndex tableName="oauth2_client_scopes" indexName="oauth2_client_scopes_scope_index">
+      <column name="scope"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="ddl-0008-add-oauth2-client-foreign-keys" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <and>
+        <tableExists tableName="oauth2_clients"/>
+        <tableExists tableName="oauth2_client_auth_methods"/>
+        <tableExists tableName="oauth2_client_grant_types"/>
+        <tableExists tableName="oauth2_client_redirect_uris"/>
+        <tableExists tableName="oauth2_client_scopes"/>
+      </and>
+    </preConditions>
+    <addForeignKeyConstraint
+      baseTableName="oauth2_client_auth_methods"
+      baseColumnNames="client_id"
+      referencedTableName="oauth2_clients"
+      referencedColumnNames="id"
+      constraintName="oauth2_client_auth_methods_client_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="oauth2_client_grant_types"
+      baseColumnNames="client_id"
+      referencedTableName="oauth2_clients"
+      referencedColumnNames="id"
+      constraintName="oauth2_client_grant_types_client_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="oauth2_client_scopes"
+      baseColumnNames="client_id"
+      referencedTableName="oauth2_clients"
+      referencedColumnNames="id"
+      constraintName="oauth2_client_scopes_client_id_foreign"/>
+    <addForeignKeyConstraint
+      baseTableName="oauth2_client_redirect_uris"
+      baseColumnNames="client_id"
+      referencedTableName="oauth2_clients"
+      referencedColumnNames="id"
+      constraintName="oauth2_client_redirect_uris_client_id_foreign"/>
+  </changeSet>
+
+</databaseChangeLog>

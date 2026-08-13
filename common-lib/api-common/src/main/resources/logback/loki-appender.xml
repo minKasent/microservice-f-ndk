@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+  <springProperty scope="context" name="LOKI_URL" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
+  <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="application"/>
+
+  <springProfile name="loki">
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+      <http>
+        <url>${LOKI_URL}</url>
+      </http>
+      <format>
+        <label>
+          <pattern>app=${APP_NAME},host=${HOSTNAME},level=%level</pattern>
+        </label>
+        <message>
+          <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [${APP_NAME},%X{trace_id},%X{span_id}] %logger{36} - %msg%n</pattern>
+        </message>
+      </format>
+      <batchMaxItems>100</batchMaxItems>
+      <batchMaxBytes>4194304</batchMaxBytes>
+      <batchTimeoutMs>5000</batchTimeoutMs>
+    </appender>
+
+    <appender name="ASYNC_LOKI" class="ch.qos.logback.classic.AsyncAppender">
+      <appender-ref ref="LOKI"/>
+      <queueSize>500</queueSize>
+      <neverBlock>true</neverBlock>
+    </appender>
+  </springProfile>
+</included>

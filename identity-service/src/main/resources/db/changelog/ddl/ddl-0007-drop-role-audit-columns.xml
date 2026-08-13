@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0007-drop-role-audit-columns" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <and>
+        <tableExists tableName="role"/>
+        <columnExists tableName="role" columnName="created_at"/>
+      </and>
+    </preConditions>
+    <dropColumn tableName="role" columnName="created_at"/>
+    <dropColumn tableName="role" columnName="updated_at"/>
+    <dropColumn tableName="role" columnName="created_by"/>
+    <dropColumn tableName="role" columnName="updated_by"/>
+  </changeSet>
+
+</databaseChangeLog>

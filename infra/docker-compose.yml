@@ -1,0 +1,202 @@
+# Infra for Microservice-F (synced from Chapter 11, Windows-friendly)
+# MySQL: keep using your local MySQL on :3306 (already running).
+# Uncomment the mysql service only if you stop local MySQL first.
+
+services:
+  api-docs:
+    image: swaggerapi/swagger-ui:v5.32.9
+    container_name: api-docs
+    environment:
+      BASE_URL: /swagger-ui
+      OAUTH_USE_BASIC_AUTH: true
+      OAUTH_USE_PKCE: true
+      URLS: >-
+        [{"url":"http://localhost:8888/credit/v3/api-docs","name":"Credit service"},
+         {"url":"http://localhost:8888/content/v3/api-docs","name":"Content service"},
+         {"url":"http://localhost:8888/identity/v3/api-docs","name":"Identity service"},
+         {"url":"http://localhost:8888/mentoring/v3/api-docs","name":"Mentoring service"},
+         {"url":"http://localhost:8888/notification/v3/api-docs","name":"Notification service"},
+         {"url":"http://localhost:8888/purchase/v3/api-docs","name":"Purchase service"},
+         {"url":"http://localhost:8888/rating/v3/api-docs","name":"Rating service"},
+         {"url":"http://localhost:8888/reporting/v3/api-docs","name":"Reporting service"}]
+    ports:
+      - "8080:8080"
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    networks:
+      - microservice-f-network
+    user: root
+    environment:
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:19092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_GC_LOG_OPTS: ' '
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      KAFKA_LOG_SEGMENT_BYTES: 536870912
+      KAFKA_LOG_CLEANUP_POLICY: delete
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+      KAFKA_NUM_NETWORK_THREADS: 3
+      KAFKA_NUM_IO_THREADS: 8
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 102400
+      KAFKA_SOCKET_REQUEST_MAX_BYTES: 104857600
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - kafka-logs:/opt/kafka/logs
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8088:8080"
+    networks:
+      - microservice-f-network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    depends_on:
+      - kafka
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: tempo
+    command: -config.file=/etc/tempo-config.yml
+    ports:
+      # UI/query port mapped to host 3110; OTLP gRPC for javaagent = localhost:4317
+      - "3110:3100"
+      - "4317:4317"
+      - "9095:9095"
+    volumes:
+      - ./tempo.yml:/etc/tempo-config.yml
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  # OpenTelemetry Java Agent (host-side): infra/otel/opentelemetry-javaagent.jar
+  # IntelliJ VM options: see infra/otel/vm-options.example.txt
+  # Or: pwsh infra/otel/run-with-otel.ps1 -JarPath ... -ServiceName purchase-service
+
+  # Uncomment only after stopping local MySQL on port 3306:
+  # mysql:
+  #   container_name: mysql
+  #   image: mysql:8
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: root
+  #   networks:
+  #     - microservice-f-network
+  #   restart: unless-stopped
+
+networks:
+  microservice-f-network:
+    driver: bridge
+
+volumes:
+  kafka-data:
+  kafka-logs:
+  mongodb-data:
+  loki-data:
+  grafana-data:
+  # mysql-data:

@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  cloud:
+    openfeign:
+      # OpenFeign 5 (Boot 4) removed okhttp auto-config; hc5 toggle kept for Boot 4
+      httpclient:
+        hc5:
+          enabled: ${OPENFEIGN_HC5_ENABLED:false}
+      client:
+        config:
+          notification-service:
+            connect-timeout: ${FEIGN_CLIENT_NOTIFICATION_CONNECT_TIMEOUT}
+            read-timeout: ${FEIGN_CLIENT_NOTIFICATION_READ_TIMEOUT}
+
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+    enabled: true
+
+internal:
+  notification-service:
+    credentials:
+      username: ${INTERNAL_NOTIFICATION_SERVICE_CREDENTIALS_USER}
+      password: ${INTERNAL_NOTIFICATION_SERVICE_CREDENTIALS_PASSWORD}
+  credit-service:
+    credentials:
+      username: ${INTERNAL_CREDIT_SERVICE_CREDENTIALS_USER}
+      password: ${INTERNAL_CREDIT_SERVICE_CREDENTIALS_PASSWORD}
+
+app:
+  jwt:
+    public-key-path: ${JWT_PUBLIC_KEY_PATH}
+    private-key-path: ${JWT_PRIVATE_KEY_PATH}
+    auto-gen-key: ${JWT_AUTO_KEYGEN}
+    key-id: ${JWT_KEY_ID}

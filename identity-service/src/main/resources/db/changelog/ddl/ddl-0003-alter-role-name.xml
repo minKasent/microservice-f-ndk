@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0003-modify-role-name-to-varchar" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <and>
+        <tableExists tableName="role"/>
+        <columnExists tableName="role" columnName="role_name"/>
+      </and>
+    </preConditions>
+    <modifyDataType
+      tableName="role"
+      columnName="role_name"
+      newDataType="VARCHAR(50)"/>
+    <addNotNullConstraint
+      tableName="role"
+      columnName="role_name"
+      columnDataType="VARCHAR(50)"/>
+  </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="purchase-0004-rename-library-to-user-library" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <and>
+        <tableExists tableName="library"/>
+        <not><tableExists tableName="user_library"/></not>
+      </and>
+    </preConditions>
+    
+    <comment>Rename 'library' table to 'user_library' to avoid MySQL reserved keyword</comment>
+    
+    <!-- Rename table -->
+    <renameTable oldTableName="library" newTableName="user_library"/>
+    
+    <!-- Rename foreign key constraint -->
+    <dropForeignKeyConstraint baseTableName="user_library" constraintName="fk_library_purchase"/>
+    <addForeignKeyConstraint baseTableName="user_library" baseColumnNames="purchase_id"
+                             constraintName="fk_user_library_purchase"
+                             referencedTableName="purchase" referencedColumnNames="id"
+                             onDelete="CASCADE"/>
+    
+    <!-- Rename indexes -->
+    <sql>
+      ALTER TABLE user_library RENAME INDEX idx_user_id TO idx_user_library_user_id;
+    </sql>
+    <sql>
+      ALTER TABLE user_library RENAME INDEX idx_content_id TO idx_user_library_content_id;
+    </sql>
+    
+  </changeSet>
+  
+  <!-- Drop old library table if both exist -->
+  <changeSet id="purchase-0005-drop-old-library-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <and>
+        <tableExists tableName="library"/>
+        <tableExists tableName="user_library"/>
+      </and>
+    </preConditions>
+    
+    <comment>Drop old 'library' table if user_library already exists</comment>
+    
+    <dropTable tableName="library"/>
+    
+  </changeSet>
+
+</databaseChangeLog>

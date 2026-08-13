@@ -1,0 +1,7 @@
+# Deprecated: use D:\Khoa\Microservice-F\infra\docker-compose.yml instead
+# Swagger is now on http://localhost:8090
+
+services:
+  note:
+    image: hello-world
+    profiles: ["disabled"]

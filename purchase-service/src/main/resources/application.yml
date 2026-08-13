@@ -1,0 +1,120 @@
+spring:
+  application:
+    name: purchase-service
+  profiles:
+    active: local,swagger,loki
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      uri: http://localhost:6969
+      request-connect-timeout: 5000
+      request-read-timeout: 5000
+      fail-fast: false
+
+server:
+  port: 8006
+
+logging:
+  level:
+    com:
+      ndk:
+        purchase:
+          client: DEBUG
+
+    io:
+      github:
+        resilience4j: DEBUG
+
+
+resilience4j.retry:
+  # Docs default: Retry ( CircuitBreaker ( RateLimiter ( Bulkhead ( Function ) ) ) )
+  # số nhỏ = outer
+  retryAspectOrder: 1
+  configs:
+    default:
+      max-attempts: 3
+      wait-duration: 500ms
+      enable-randomized-wait: true
+      randomized-wait-factor: 0.3
+      retry-exceptions:
+        - org.springframework.web.client.HttpClientErrorException
+        - java.util.concurrent.TimeoutException
+        - java.io.IOException
+        - feign.RetryableException
+      event-consumer-buffer-size: 100
+  instances:
+    credit-service:
+      base-config: default
+    notification-service:
+      max-attempts: 3
+      wait-duration: 1s
+      enable-randomized-wait: true
+      enable-exponential-backoff: true
+      exponential-backoff-multiplier: 2
+      randomized-wait-factor: 0.5
+      retry-exceptions:
+        - org.springframework.web.client.HttpClientErrorException
+        - java.util.concurrent.TimeoutException
+        - java.io.IOException
+        - feign.RetryableException
+
+
+
+resilience4j.circuitbreaker:
+  circuitBreakerAspectOrder: 2
+  configs:
+    default:
+      sliding-window-type: COUNT_BASED
+      sliding-window-size: 10
+      minimum-number-of-calls: 5
+      permitted-number-of-calls-in-half-open-state: 3
+      automatic-transition-from-open-to-half-open-enabled: true
+      wait-duration-in-open-state: 5s
+      failure-rate-threshold: 50
+      # Whitelist: exception ngoài list bị coi là SUCCESS → CB không OPEN
+      # tức là những exception nào trong  record-exceptions thì sẽ bị ngắt ngay lập tức
+      record-exceptions:
+        - feign.FeignException
+        - java.util.concurrent.TimeoutException
+        - java.io.IOException
+        - java.net.ConnectException
+        - java.lang.RuntimeException
+      ignore-exceptions:
+        - feign.FeignException$BadRequest
+        - feign.FeignException$Unauthorized
+        - feign.FeignException$Forbidden
+        - feign.FeignException$NotFound
+
+  instances:
+    credit-service:
+      base-config: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+
+resilience4j.ratelimiter:
+  rateLimiterAspectOrder: 3
+  configs:
+    default:
+      limit-for-period: 2
+      limit-refresh-period: 10s
+      timeout-duration: 5s
+
+  instances:
+    credit-service:
+      base-config: default
+
+resilience4j.bulkhead:
+  configs:
+    default:
+      max-concurrent-calls: 10
+      max-wait-duration: 1s
+  instances:
+    credit-service:
+      max-concurrent-calls: 1
+      max-wait-duration: 10s

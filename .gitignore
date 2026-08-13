@@ -1,0 +1,24 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Build
+**/target/
+**/build/
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+logs/
+*.log
+
+# Secrets / local keys (generate with scripts/gen-rsa-key.ps1)
+keys/*.pem
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db

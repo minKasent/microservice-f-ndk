@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0010-create-creator-application-table" author="khoand01">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="creator_application"/>
+      </not>
+    </preConditions>
+
+    <createTable tableName="creator_application">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="reason" type="TEXT">
+        <constraints nullable="true"/>
+      </column>
+      <column name="portfolio_url" type="VARCHAR(500)">
+        <constraints nullable="true"/>
+      </column>
+      <column name="experience_years" type="TINYINT">
+        <constraints nullable="true"/>
+      </column>
+      <column name="specialization" type="VARCHAR(255)">
+        <constraints nullable="true"/>
+      </column>
+      <column name="status" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="reviewed_by" type="BIGINT UNSIGNED">
+        <constraints nullable="true"/>
+      </column>
+      <column name="reviewed_at" type="TIMESTAMP">
+        <constraints nullable="true"/>
+      </column>
+      <column name="review_note" type="TEXT">
+        <constraints nullable="true"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addForeignKeyConstraint
+      baseTableName="creator_application"
+      baseColumnNames="user_id"
+      constraintName="fk_creator_application_user"
+      referencedTableName="user"
+      referencedColumnNames="id"
+      onDelete="CASCADE"
+      onUpdate="CASCADE"/>
+
+    <createIndex indexName="idx_creator_application_user_id" tableName="creator_application">
+      <column name="user_id"/>
+    </createIndex>
+
+    <createIndex indexName="idx_creator_application_status" tableName="creator_application">
+      <column name="status"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!-- ============================================================ -->
+  <!-- 1. Create wallet table -->
+  <!-- ============================================================ -->
+  <changeSet id="credit-0001-create-wallet-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="wallet"/>
+      </not>
+    </preConditions>
+
+    <createTable tableName="wallet">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="balance" type="DECIMAL(19, 2)" defaultValueNumeric="0.00">
+        <constraints nullable="false"/>
+      </column>
+      <column name="version" type="BIGINT" defaultValueNumeric="0">
+        <constraints nullable="true"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createIndex tableName="wallet" indexName="idx_wallet_user_id">
+      <column name="user_id"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- ============================================================ -->
+  <!-- 2. Create transaction table -->
+  <!-- ============================================================ -->
+  <changeSet id="credit-0002-create-transaction-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="transaction"/>
+      </not>
+    </preConditions>
+
+    <createTable tableName="transaction">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="type" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="amount" type="DECIMAL(19, 2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="balance_before" type="DECIMAL(19, 2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="balance_after" type="DECIMAL(19, 2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="VARCHAR(500)">
+        <constraints nullable="true"/>
+      </column>
+      <column name="reference_id" type="VARCHAR(255)">
+        <constraints nullable="true"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createIndex tableName="transaction" indexName="idx_transaction_user_id">
+      <column name="user_id"/>
+    </createIndex>
+    <createIndex tableName="transaction" indexName="idx_transaction_created_at">
+      <column name="created_at"/>
+    </createIndex>
+    <createIndex tableName="transaction" indexName="idx_transaction_type">
+      <column name="type"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- ============================================================ -->
+  <!-- 3. Create withdrawal_request table -->
+  <!-- ============================================================ -->
+  <changeSet id="credit-0003-create-withdrawal-request-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="withdrawal_request"/>
+      </not>
+    </preConditions>
+
+    <createTable tableName="withdrawal_request">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="amount" type="DECIMAL(19, 2)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="bank_account_number" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="bank_name" type="VARCHAR(100)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="account_holder_name" type="VARCHAR(200)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="note" type="TEXT">
+        <constraints nullable="true"/>
+      </column>
+      <column name="admin_note" type="TEXT">
+        <constraints nullable="true"/>
+      </column>
+      <column name="reviewed_by" type="BIGINT UNSIGNED">
+        <constraints nullable="true"/>
+      </column>
+      <column name="reviewed_at" type="TIMESTAMP">
+        <constraints nullable="true"/>
+      </column>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createIndex tableName="withdrawal_request" indexName="idx_withdrawal_user_id">
+      <column name="user_id"/>
+    </createIndex>
+    <createIndex tableName="withdrawal_request" indexName="idx_withdrawal_status">
+      <column name="status"/>
+    </createIndex>
+    <createIndex tableName="withdrawal_request" indexName="idx_withdrawal_created_at">
+      <column name="created_at"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

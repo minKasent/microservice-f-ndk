@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <!-- Create notification_event_log table -->
+  <changeSet id="notification-0001-create-event-log-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="notification_event_log"/></not>
+    </preConditions>
+
+    <createTable tableName="notification_event_log">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="notification_id" type="VARCHAR(36)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="event_type" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="channel" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="recipient" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="VARCHAR(20)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_message" type="TEXT"/>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createIndex tableName="notification_event_log" indexName="idx_notification_id">
+      <column name="notification_id"/>
+    </createIndex>
+
+    <createIndex tableName="notification_event_log" indexName="idx_created_at">
+      <column name="created_at"/>
+    </createIndex>
+
+    <createIndex tableName="notification_event_log" indexName="idx_channel_status">
+      <column name="channel"/>
+      <column name="status"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

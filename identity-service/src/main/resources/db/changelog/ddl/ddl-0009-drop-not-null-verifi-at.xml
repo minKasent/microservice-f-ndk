@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="ddl-0009-drop-not-null-verifi-at" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <and>
+        <tableExists tableName="user_verification"/>
+        <columnExists tableName="user_verification" columnName="verifi_at"/>
+      </and>
+    </preConditions>
+    <dropNotNullConstraint
+      tableName="user_verification"
+      columnName="verifi_at"
+      columnDataType="TIMESTAMP"/>
+    <comment>verifi_at is set only after user verifies; must be nullable on create</comment>
+  </changeSet>
+
+</databaseChangeLog>
