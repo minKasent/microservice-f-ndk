@@ -24,7 +24,6 @@
         <module>rating-service</module>
         <module>mentoring-service</module>
         <module>reporting-service</module>
-        <module>simple-temporal-workflow</module>
     </modules>
 
     <properties>
