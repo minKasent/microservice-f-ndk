@@ -1,0 +1,30 @@
+# =============================================================================
+# Service: rating-service — Type: ClusterIP
+# =============================================================================
+# Rating Service chỉ cần truy cập nội bộ qua API Gateway:
+#   - http://rating-service.devsharing.svc.cluster.local:8080
+#   - http://rating-service.devsharing.svc.cluster.local:8005 (legacy mapping)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: rating-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: rating-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  type: ClusterIP
+
+  selector:
+    app: rating-service
+
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: legacy
+      port: 8005
+      targetPort: 8080
+      protocol: TCP

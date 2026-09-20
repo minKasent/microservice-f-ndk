@@ -69,3 +69,4 @@ data:
   # true: tiện cho dev/test, mỗi lần restart key sẽ khác
   # false: cần mount key từ Secret
   JWT_AUTO_KEYGEN: "true"
+  JWT_KEY_ID: "dev-jwt-external"

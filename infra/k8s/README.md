@@ -20,7 +20,8 @@ k8s/
 ├── notification-service/             # Kafka consumer + MongoDB
 ├── credit-service/                   # Quản lý tín dụng
 ├── content-service/                  # Quản lý nội dung khóa học
-└── purchase-service/                 # Xử lý giao dịch mua bán
+├── purchase-service/                 # Xử lý giao dịch mua bán
+└── rating-service/                   # Đánh giá & xếp hạng nội dung
 ```
 
 Mỗi thư mục service gồm 3 file: `configmap.yaml`, `deployment.yaml`, `service.yaml`.

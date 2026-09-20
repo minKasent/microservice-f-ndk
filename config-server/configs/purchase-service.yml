@@ -38,7 +38,7 @@ spring:
     oauth2:
       resource-server:
         jwt:
-          issuer-uri: http://localhost:8001
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8001}
 
 # Purchase Configuration
 purchase:

@@ -52,14 +52,14 @@ Nền tảng kiến trúc Microservices cho hệ thống chia sẻ nội dung v�
 | :--- | :--- | :--- | :--- |
 | **`discovery-server`** | `8761` | Service Registry & Discovery | Netflix Eureka Server |
 | **`config-server`** | `6969` | Centralized Configuration Server | Spring Cloud Config |
-| **`api-gateway`** | `8080` | Unified API Gateway, Routing & CORS | Spring Cloud Gateway, Reactive |
+| **`api-gateway`** | `8888` | Unified API Gateway, Routing & CORS | Spring Cloud Gateway, Reactive |
 | **`identity-service`** | `8001` | Auth, OAuth2 Server, User Management | Spring Security, OAuth2, JWT, JPA |
 | **`credit-service`** | `8002` | Quản lý số dư ví, nạp tiền, hoa hồng | Spring Data JPA, Liquibase, SCCV |
 | **`content-service`** | `8003` | Quản lý khóa học, bài học, kiểm duyệt | Spring Data JPA, MySQL, Kafka |
 | **`notification-service`** | `8004` | Gửi email thông báo, lịch sử dispatch | Spring Kafka, Email Provider |
+| **`rating-service`** | `8005` | Đánh giá, xếp hạng nội dung khóa học | Spring Data JPA, Liquibase |
 | **`purchase-service`** | `8006` | Điều phối mua hàng, thư viện người dùng | Saga Orchestrator, Kafka, JPA |
-| **`mentoring-service`** | `8005` | Đặt lịch tư vấn và kết nối mentor | Spring Data JPA, Rest API |
-| **`rating-service`** | `8007` | Đánh giá, xếp hạng nội dung khóa học | Spring Data JPA, Liquibase |
+| **`mentoring-service`** | `8007` | Đặt lịch tư vấn và kết nối mentor | Spring Data JPA, Rest API |
 | **`reporting-service`** | `8008` | Tổng hợp báo cáo thống kê, phân tích | Spring Boot, Data Processing |
 | **`common-lib`** | N/A | Thư viện dùng chung (Saga DTOs, Exception) | Shared Maven Library |
 
@@ -111,37 +111,47 @@ Nền tảng kiến trúc Microservices cho hệ thống chia sẻ nội dung v�
 ## 🏁 Hướng dẫn cài đặt & Chạy hệ thống
 
 ### 1. Yêu cầu môi trường
-- **JDK**: Java 17 hoặc 21 (Temurin khuyến nghị).
+- **JDK**: Java 21 LTS (Temurin / OpenJDK 21).
 - **Maven**: Version 3.9 trở lên.
 - **Docker & Docker Compose**: Docker Desktop hoặc Docker Engine trên Linux/macOS/Windows (WSL2).
 
 ### 2. Khởi chạy hạ tầng (Docker Compose)
 Chạy toàn bộ cơ sở dữ liệu, message broker và observability stack:
 
-```bash
-cd infra
-docker compose up -d
-```
+- **Linux / macOS**:
+  ```bash
+  chmod +x scripts/*.sh
+  ./scripts/start-infra.sh
+  ```
+- **Windows (PowerShell)**:
+  ```powershell
+  .\scripts\start-infra.ps1
+  ```
+- **Hoặc trực tiếp qua Docker Compose**:
+  ```bash
+  cd infra
+  docker compose up -d
+  ```
 
 Kiểm tra trạng thái các container đang chạy:
 ```bash
 docker compose ps
 ```
 
-### 3. Khởi chạy các Microservices
-1. **Cài đặt thư viện dùng chung (`common-lib`)**:
-   ```bash
-   cd common-lib
-   mvn clean install -DskipTests
-   cd ..
-   ```
+### 3. Build & Khởi chạy Microservices
+Dự án được cấu hình **Root Multi-Module Aggregator POM** tại thư mục gốc, cho phép build toàn bộ hệ sinh thái chỉ bằng 1 lệnh duy nhất:
 
-2. **Khởi động các dịch vụ cốt lõi theo thứ tự**:
-   - `config-server` (Port 6969)
-   - `discovery-server` (Port 8761)
-   - `api-gateway` (Port 8080)
-   - `identity-service` (Port 8001)
-   - Các business services còn lại: `credit-service`, `content-service`, `notification-service`, `purchase-service`, `mentoring-service`, `rating-service`.
+```bash
+# Build toàn bộ common-lib và 11 microservices cùng lúc:
+mvn clean install -DskipTests
+```
+
+Sau đó, khởi động các dịch vụ cốt lõi theo thứ tự:
+1. `config-server` (Port 6969)
+2. `discovery-server` (Eureka - Port 8761)
+3. `api-gateway` (Port 8080)
+4. `identity-service` (Port 8001)
+5. Các business services còn lại: `credit-service`, `content-service`, `notification-service`, `purchase-service`, `rating-service`, `mentoring-service`, `reporting-service`.
 
 ---
 

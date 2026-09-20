@@ -19,8 +19,8 @@ OPENFEIGN_HC5_ENABLED: false
 FEIGN_CLIENT_NOTIFICATION_CONNECT_TIMEOUT: 5000
 FEIGN_CLIENT_NOTIFICATION_READ_TIMEOUT: 20000
 
-JWT_PUBLIC_KEY_PATH: D:/Khoa/Microservice-F/keys/jwt-public-key.pem
-JWT_PRIVATE_KEY_PATH: D:/Khoa/Microservice-F/keys/jwt-private-key.pem
+JWT_PUBLIC_KEY_PATH: ./keys/jwt-public-key.pem
+JWT_PRIVATE_KEY_PATH: ./keys/jwt-private-key.pem
 JWT_AUTO_KEYGEN: false
 JWT_KEY_ID: dev-jwt-external
 

@@ -38,7 +38,7 @@ internal:
 
 app:
   jwt:
-    public-key-path: ${JWT_PUBLIC_KEY_PATH}
-    private-key-path: ${JWT_PRIVATE_KEY_PATH}
-    auto-gen-key: ${JWT_AUTO_KEYGEN}
-    key-id: ${JWT_KEY_ID}
+    public-key-path: ${JWT_PUBLIC_KEY_PATH:}
+    private-key-path: ${JWT_PRIVATE_KEY_PATH:}
+    auto-gen-key: ${JWT_AUTO_KEYGEN:true}
+    key-id: ${JWT_KEY_ID:dev-jwt-external}

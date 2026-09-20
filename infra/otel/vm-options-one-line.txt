@@ -2,34 +2,34 @@
 # Chỉ khác otel.service.name
 
 # identity-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=identity-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=identity-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # content-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=content-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=content-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # credit-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=credit-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=credit-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # purchase-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=purchase-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=purchase-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # notification-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=notification-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=notification-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # rating-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=rating-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=rating-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # mentoring-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=mentoring-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=mentoring-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # reporting-service
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=reporting-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=reporting-service -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # api-gateway
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=api-gateway -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=api-gateway -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # config-server
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=config-server -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=config-server -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
 
 # discovery-server
--javaagent:D:/Khoa/Microservice-F/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=discovery-server -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage
+-javaagent:$PROJECT_DIR$/infra/otel/opentelemetry-javaagent.jar -Dotel.service.name=discovery-server -Dotel.exporter.otlp.endpoint=http://localhost:4317 -Dotel.exporter.otlp.protocol=grpc -Dotel.traces.exporter=otlp -Dotel.metrics.exporter=none -Dotel.logs.exporter=none -Dotel.propagators=tracecontext,baggage

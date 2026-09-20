@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.ndk</groupId>
+    <artifactId>microservice-platform</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>microservice-platform</name>
+    <description>Root Aggregator POM for Dev Sharing Microservices Platform</description>
+
+    <modules>
+        <module>common-lib</module>
+        <module>discovery-server</module>
+        <module>config-server</module>
+        <module>api-gateway</module>
+        <module>identity-service</module>
+        <module>credit-service</module>
+        <module>content-service</module>
+        <module>notification-service</module>
+        <module>purchase-service</module>
+        <module>rating-service</module>
+        <module>mentoring-service</module>
+        <module>reporting-service</module>
+        <module>simple-temporal-workflow</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+</project>

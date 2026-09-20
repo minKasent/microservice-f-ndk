@@ -5,6 +5,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -41,6 +42,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
+    @Value("${OAUTH2_ISSUER_URI:${oauth2.issuer-uri:http://localhost:8001}}")
+    private String issuerUri;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -122,7 +126,7 @@ public class SecurityConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-                .issuer("http://localhost:8001")
+                .issuer(issuerUri)
                 .build();
     }
 

@@ -1,4 +1,4 @@
-# Deprecated: use D:\Khoa\Microservice-F\infra\docker-compose.yml instead
+# Deprecated: use infra/docker-compose.yml instead
 # Swagger is now on http://localhost:8090
 
 services:
