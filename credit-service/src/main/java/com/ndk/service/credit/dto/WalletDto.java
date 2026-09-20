@@ -14,4 +14,5 @@ public class WalletDto {
   private Long userId;
   private BigDecimal balance;
   private BigDecimal balanceInVnd; // balance * 1000
+  private BigDecimal frozenBalance;
 }

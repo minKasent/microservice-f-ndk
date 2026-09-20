@@ -287,7 +287,8 @@ public class ContentServiceImpl implements ContentService {
     Content content = contentRepository.findById(contentId)
         .orElseThrow(() -> new DevSharingException(ExceptionEnum.CONTENT_NOT_FOUND, null));
 
-    content.setViewCount(content.getViewCount() + 1);
+    long currentViews = content.getViewCount() != null ? content.getViewCount() : 0L;
+    content.setViewCount(currentViews + 1L);
     contentRepository.save(content);
   }
 
@@ -297,7 +298,8 @@ public class ContentServiceImpl implements ContentService {
     Content content = contentRepository.findById(contentId)
         .orElseThrow(() -> new DevSharingException(ExceptionEnum.CONTENT_NOT_FOUND, null));
 
-    content.setPurchaseCount(content.getPurchaseCount() + 1);
+    long currentPurchases = content.getPurchaseCount() != null ? content.getPurchaseCount() : 0L;
+    content.setPurchaseCount(currentPurchases + 1L);
     contentRepository.save(content);
   }
 

@@ -3,12 +3,14 @@ package com.ndk.service.credit.service.impl;
 import com.ndk.common.api.exception.DevSharingException;
 import com.ndk.service.credit.dto.ReviewWithdrawalRequest;
 import com.ndk.service.credit.dto.WithdrawalRequestDto;
+import com.ndk.service.credit.entity.Transaction;
 import com.ndk.service.credit.entity.TransactionType;
 import com.ndk.service.credit.entity.Wallet;
 import com.ndk.service.credit.entity.WithdrawalRequest;
 import com.ndk.service.credit.entity.WithdrawalStatus;
 import com.ndk.service.credit.exception.ExceptionEnum;
 import com.ndk.service.credit.mapper.WithdrawalRequestMapper;
+import com.ndk.service.credit.repository.TransactionRepository;
 import com.ndk.service.credit.repository.WalletRepository;
 import com.ndk.service.credit.repository.WithdrawalRequestRepository;
 import com.ndk.service.credit.service.WalletService;
@@ -30,6 +32,7 @@ public class WithdrawalServiceImpl implements WithdrawalService {
 
   private final WithdrawalRequestRepository withdrawalRequestRepository;
   private final WalletRepository walletRepository;
+  private final TransactionRepository transactionRepository;
   private final WalletService walletService;
   private final WithdrawalRequestMapper withdrawalRequestMapper;
 
@@ -44,8 +47,8 @@ public class WithdrawalServiceImpl implements WithdrawalService {
           new Object[]{MINIMUM_WITHDRAWAL});
     }
 
-    // Check if user has sufficient balance
-    Wallet wallet = walletRepository.findByUserId(userId)
+    // Check if user has sufficient balance with pessimistic write lock
+    Wallet wallet = walletRepository.findByUserIdWithLock(userId)
         .orElseThrow(() -> new DevSharingException(ExceptionEnum.WALLET_NOT_FOUND, new Object[]{userId}));
 
     if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
@@ -58,6 +61,15 @@ public class WithdrawalServiceImpl implements WithdrawalService {
     if (!pendingRequests.isEmpty()) {
       throw new DevSharingException(ExceptionEnum.PENDING_WITHDRAWAL_EXISTS, new Object[]{});
     }
+
+    // Freeze balance immediately to prevent double-spending or subsequent overdraft
+    BigDecimal balanceBefore = wallet.getBalance();
+    BigDecimal balanceAfter = balanceBefore.subtract(request.getAmount());
+    BigDecimal currentFrozen = wallet.getFrozenBalance() != null ? wallet.getFrozenBalance() : BigDecimal.ZERO;
+    wallet.setBalance(balanceAfter);
+    wallet.setFrozenBalance(currentFrozen.add(request.getAmount()));
+    wallet.setUpdatedAt(Instant.now());
+    walletRepository.save(wallet);
 
     WithdrawalRequest withdrawalRequest = WithdrawalRequest.builder()
         .userId(userId)
@@ -73,8 +85,8 @@ public class WithdrawalServiceImpl implements WithdrawalService {
 
     withdrawalRequest = withdrawalRequestRepository.save(withdrawalRequest);
 
-    log.info("(createWithdrawalRequest)User [{}] created withdrawal request for {} credits",
-        userId, request.getAmount());
+    log.info("(createWithdrawalRequest)User [{}] created withdrawal request for {} credits. Balance: {} -> {}, Frozen: {}",
+        userId, request.getAmount(), balanceBefore, balanceAfter, wallet.getFrozenBalance());
 
     return withdrawalRequestMapper.toDto(withdrawalRequest);
   }
@@ -91,22 +103,42 @@ public class WithdrawalServiceImpl implements WithdrawalService {
     }
 
     Instant now = Instant.now();
+    Long requestUserId = withdrawalRequest.getUserId();
+    Wallet wallet = walletRepository.findByUserIdWithLock(requestUserId)
+        .orElseThrow(() -> new DevSharingException(ExceptionEnum.WALLET_NOT_FOUND,
+            new Object[]{requestUserId}));
+    BigDecimal currentFrozen = wallet.getFrozenBalance() != null ? wallet.getFrozenBalance() : BigDecimal.ZERO;
 
     if (review.getApproved()) {
-      // Approve: deduct credit from wallet
-      walletService.deductCredit(
-          withdrawalRequest.getUserId(),
-          withdrawalRequest.getAmount(),
-          TransactionType.WITHDRAWAL,
-          "Withdrawal approved: " + review.getAdminNote(),
-          String.valueOf(requestId)
-      );
+      // Approve: permanently clear frozen balance and record withdrawal transaction
+      BigDecimal updatedFrozen = currentFrozen.subtract(withdrawalRequest.getAmount()).max(BigDecimal.ZERO);
+      wallet.setFrozenBalance(updatedFrozen);
+      wallet.setUpdatedAt(now);
+      walletRepository.save(wallet);
+
+      Transaction transaction = Transaction.builder()
+          .userId(withdrawalRequest.getUserId())
+          .type(TransactionType.WITHDRAWAL)
+          .amount(withdrawalRequest.getAmount().negate())
+          .balanceBefore(wallet.getBalance().add(withdrawalRequest.getAmount()))
+          .balanceAfter(wallet.getBalance())
+          .description("Withdrawal approved: " + review.getAdminNote())
+          .referenceId(String.valueOf(requestId))
+          .createdAt(now)
+          .build();
+      transactionRepository.save(transaction);
 
       withdrawalRequest.setStatus(WithdrawalStatus.APPROVED);
       log.info("(reviewWithdrawalRequest)Withdrawal request [{}] approved by admin [{}]",
           requestId, adminUserId);
     } else {
-      // Reject: no deduction
+      // Reject: refund frozen balance back to active balance
+      BigDecimal updatedFrozen = currentFrozen.subtract(withdrawalRequest.getAmount()).max(BigDecimal.ZERO);
+      wallet.setFrozenBalance(updatedFrozen);
+      wallet.setBalance(wallet.getBalance().add(withdrawalRequest.getAmount()));
+      wallet.setUpdatedAt(now);
+      walletRepository.save(wallet);
+
       withdrawalRequest.setStatus(WithdrawalStatus.REJECTED);
       log.info("(reviewWithdrawalRequest)Withdrawal request [{}] rejected by admin [{}]",
           requestId, adminUserId);

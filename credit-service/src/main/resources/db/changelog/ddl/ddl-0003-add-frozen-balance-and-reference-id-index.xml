@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="credit-0003-add-frozen-balance" author="dangkhoa">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <columnExists tableName="wallet" columnName="frozen_balance"/>
+      </not>
+    </preConditions>
+    <addColumn tableName="wallet">
+      <column name="frozen_balance" type="DECIMAL(19, 2)" defaultValueNumeric="0.00">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="credit-0004-add-idx-transaction-reference-id" author="dangkhoa">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <indexExists tableName="transaction" indexName="idx_transaction_reference_id"/>
+      </not>
+    </preConditions>
+    <createIndex tableName="transaction" indexName="idx_transaction_reference_id">
+      <column name="reference_id"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

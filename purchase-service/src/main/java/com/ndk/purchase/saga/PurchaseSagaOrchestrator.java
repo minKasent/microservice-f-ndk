@@ -291,6 +291,36 @@ public class PurchaseSagaOrchestrator {
     purchase.setCreatorCommission(creatorCommission);
     purchaseRepository.save(purchase);
 
+    // Free content: skip wallet deduction and proceed directly to incrementing purchase count
+    if (price.compareTo(BigDecimal.ZERO) == 0) {
+      log.info("Free content detected, skipping credit deduction - SagaId: {}, ContentId: {}",
+          saga.getSagaId(), sagaData.getContentId());
+
+      Map<String, Object> incrementPayload = new HashMap<>();
+      incrementPayload.put("contentId", sagaData.getContentId());
+
+      SagaCommand incrementCommand = SagaCommand.builder()
+          .sagaId(saga.getSagaId())
+          .commandType(SagaCommandType.INCREMENT_PURCHASE_COUNT.name())
+          .idempotencyKey(saga.getSagaId() + "-INCREMENT_PURCHASE_COUNT")
+          .replyTopic(replyTopic)
+          .timestamp(Instant.now())
+          .payload(incrementPayload)
+          .build();
+
+      saga.setCurrentStep(SagaStep.INCREMENTING_COUNT);
+      saga.setSagaData(serializeSagaData(sagaData));
+      sagaRepository.save(saga);
+
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          commandProducer.sendContentCommand(incrementCommand);
+        }
+      });
+      return;
+    }
+
     // Build DEDUCT_CREDIT command (Step 3)
     Map<String, Object> deductPayload = new HashMap<>();
     deductPayload.put("userId", sagaData.getBuyerId());
@@ -554,28 +584,26 @@ public class PurchaseSagaOrchestrator {
       return;
     }
 
-    purchase.setStatus(PurchaseStatus.COMPLETED);
-    purchase.setCompletedAt(Instant.now());
-    purchaseRepository.save(purchase);
-
-    try {
-      Library library = Library.builder()
-          .userId(sagaData.getBuyerId())
-          .contentId(sagaData.getContentId())
-          .purchaseId(saga.getPurchaseId())
-          .accessGrantedAt(Instant.now())
-          .accessCount(0)
-          .isActive(true)
-          .build();
-      libraryRepository.save(library);
-    } catch (DataIntegrityViolationException e) {
-      log.error("Duplicate library entry detected - SagaId: {}, BuyerId: {}, ContentId: {}",
+    if (libraryRepository.existsByUserIdAndContentId(sagaData.getBuyerId(), sagaData.getContentId())) {
+      log.warn("Duplicate library entry detected - SagaId: {}, BuyerId: {}, ContentId: {}",
           saga.getSagaId(), sagaData.getBuyerId(), sagaData.getContentId());
-      purchase.setStatus(PurchaseStatus.PENDING);
-      purchaseRepository.save(purchase);
       startFullCompensation(saga, sagaData, "Duplicate purchase detected: content already in library");
       return;
     }
+
+    Library library = Library.builder()
+        .userId(sagaData.getBuyerId())
+        .contentId(sagaData.getContentId())
+        .purchaseId(saga.getPurchaseId())
+        .accessGrantedAt(Instant.now())
+        .accessCount(0)
+        .isActive(true)
+        .build();
+    libraryRepository.save(library);
+
+    purchase.setStatus(PurchaseStatus.COMPLETED);
+    purchase.setCompletedAt(Instant.now());
+    purchaseRepository.save(purchase);
 
     saga.setCurrentStep(SagaStep.COMPLETED);
     saga.setCompletedAt(Instant.now());
@@ -600,6 +628,13 @@ public class PurchaseSagaOrchestrator {
 
     sagaCompensatedCounter.increment();
     saga.setLastError(reason);
+
+    // Free content: no financial deduction occurred, skip reverse/refund commands
+    if (sagaData.getContentPrice() != null && sagaData.getContentPrice().compareTo(BigDecimal.ZERO) == 0) {
+      log.info("Free content detected, skipping reverse commission and refund - SagaId: {}", saga.getSagaId());
+      failSaga(saga, reason);
+      return;
+    }
 
     Map<String, Object> reversePayload = new HashMap<>();
     reversePayload.put("userId", sagaData.getCreatorId());
@@ -696,7 +731,7 @@ public class PurchaseSagaOrchestrator {
 
   private String generatePurchaseCode() {
     String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-    return "PUR-" + timestamp + "-" + System.currentTimeMillis() % 10000;
+    return "PUR-" + timestamp + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
   }
 
   private String serializeSagaData(PurchaseSagaData sagaData) {

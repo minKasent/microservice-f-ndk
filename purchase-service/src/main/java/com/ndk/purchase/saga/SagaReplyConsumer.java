@@ -24,11 +24,11 @@ public class SagaReplyConsumer {
         reply.getSagaId(), reply.getCommandType(), reply.isSuccess());
     try {
       orchestrator.handleReply(reply);
+      acknowledgment.acknowledge();
     } catch (Exception e) {
       log.error("Error handling saga reply - SagaId: {}, CommandType: {}, Error: {}",
           reply.getSagaId(), reply.getCommandType(), e.getMessage(), e);
-    } finally {
-      acknowledgment.acknowledge();
+      throw e;
     }
   }
 }

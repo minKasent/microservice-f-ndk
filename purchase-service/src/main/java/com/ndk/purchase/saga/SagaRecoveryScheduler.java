@@ -2,11 +2,14 @@ package com.ndk.purchase.saga;
 
 import com.ndk.common.saga.message.SagaCommand;
 import com.ndk.purchase.entity.PurchaseSaga;
+import com.ndk.purchase.enums.PurchaseStatus;
 import com.ndk.purchase.enums.SagaCommandType;
 import com.ndk.purchase.enums.SagaStep;
+import com.ndk.purchase.repository.PurchaseRepository;
 import com.ndk.purchase.repository.PurchaseSagaRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SagaRecoveryScheduler {
 
   private final PurchaseSagaRepository sagaRepository;
+  private final PurchaseRepository purchaseRepository;
   private final SagaCommandProducer commandProducer;
   private final ObjectMapper objectMapper;
 
@@ -67,6 +71,21 @@ public class SagaRecoveryScheduler {
       saga.setLastError("Exceeded max retries (" + maxRetries + ")");
       saga.setCompletedAt(Instant.now());
       sagaRepository.save(saga);
+
+      // Release semantic lock on Purchase
+      purchaseRepository.findById(saga.getPurchaseId()).ifPresent(purchase -> {
+        purchase.setStatus(PurchaseStatus.FAILED);
+        purchaseRepository.save(purchase);
+      });
+
+      // Trigger compensation if credit was already deducted
+      try {
+        PurchaseSagaData sagaData = objectMapper.readValue(saga.getSagaData(), PurchaseSagaData.class);
+        triggerCompensationOnExhaustion(saga, sagaData);
+      } catch (Exception e) {
+        log.error("Failed to trigger compensation on retry exhaustion - SagaId: {}, Error: {}",
+            saga.getSagaId(), e.getMessage());
+      }
       return;
     }
 
@@ -158,5 +177,63 @@ public class SagaRecoveryScheduler {
         .timestamp(Instant.now())
         .payload(payload)
         .build();
+  }
+
+  private void triggerCompensationOnExhaustion(PurchaseSaga saga, PurchaseSagaData sagaData) {
+    SagaStep step = saga.getCurrentStep();
+    if (step == SagaStep.INCREMENTING_COUNT || step == SagaStep.COMPENSATING_REVERSE_COMMISSION) {
+      triggerReverseCommission(saga, sagaData);
+      triggerRefundBuyer(saga, sagaData);
+    } else if (step == SagaStep.ADDING_COMMISSION || step == SagaStep.COMPENSATING_REFUND_BUYER) {
+      triggerRefundBuyer(saga, sagaData);
+    }
+  }
+
+  private void triggerReverseCommission(PurchaseSaga saga, PurchaseSagaData sagaData) {
+    if (sagaData.getCreatorCommission() == null || sagaData.getCreatorCommission().compareTo(BigDecimal.ZERO) <= 0) {
+      return;
+    }
+    Map<String, Object> payload = new HashMap<>();
+    payload.put("userId", sagaData.getCreatorId());
+    payload.put("amount", sagaData.getCreatorCommission());
+    payload.put("reason", "Reverse commission: recovery retry exhausted");
+    payload.put("referenceId", sagaData.getPurchaseCode() + "-RECOVERY");
+
+    SagaCommand command = SagaCommand.builder()
+        .sagaId(saga.getSagaId())
+        .commandType(SagaCommandType.REVERSE_COMMISSION.name())
+        .idempotencyKey(saga.getSagaId() + "-RECOVERY-REVERSE")
+        .replyTopic(replyTopic)
+        .timestamp(Instant.now())
+        .payload(payload)
+        .build();
+
+    commandProducer.sendCreditCommand(command);
+    log.info("Sent recovery reverse commission command - SagaId: {}, CreatorId: {}",
+        saga.getSagaId(), sagaData.getCreatorId());
+  }
+
+  private void triggerRefundBuyer(PurchaseSaga saga, PurchaseSagaData sagaData) {
+    if (sagaData.getContentPrice() == null || sagaData.getContentPrice().compareTo(BigDecimal.ZERO) <= 0) {
+      return;
+    }
+    Map<String, Object> payload = new HashMap<>();
+    payload.put("userId", sagaData.getBuyerId());
+    payload.put("amount", sagaData.getContentPrice());
+    payload.put("reason", "Refund credit: recovery retry exhausted");
+    payload.put("referenceId", sagaData.getPurchaseCode() + "-RECOVERY");
+
+    SagaCommand command = SagaCommand.builder()
+        .sagaId(saga.getSagaId())
+        .commandType(SagaCommandType.REFUND_CREDIT.name())
+        .idempotencyKey(saga.getSagaId() + "-RECOVERY-REFUND")
+        .replyTopic(replyTopic)
+        .timestamp(Instant.now())
+        .payload(payload)
+        .build();
+
+    commandProducer.sendCreditCommand(command);
+    log.info("Sent recovery refund command - SagaId: {}, BuyerId: {}",
+        saga.getSagaId(), sagaData.getBuyerId());
   }
 }

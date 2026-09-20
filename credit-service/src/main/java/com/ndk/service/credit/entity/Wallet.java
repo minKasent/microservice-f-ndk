@@ -31,6 +31,10 @@ public class Wallet {
   @Column(name = "balance", nullable = false, precision = 19, scale = 2)
   private BigDecimal balance;
 
+  @Column(name = "frozen_balance", nullable = false, precision = 19, scale = 2)
+  @Builder.Default
+  private BigDecimal frozenBalance = BigDecimal.ZERO;
+
   @Version
   @Column(name = "version")
   private Long version; // Optimistic locking để tránh race condition

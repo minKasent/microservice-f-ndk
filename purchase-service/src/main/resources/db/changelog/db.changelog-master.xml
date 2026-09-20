@@ -8,5 +8,6 @@
   <include file="db/changelog/ddl/ddl-0001-init-purchase-tables.xml"/>
   <include file="db/changelog/ddl/ddl-0002-rename-library-to-user-library.xml"/>
   <include file="db/changelog/ddl/ddl-0003-create-purchase-saga-table.xml"/>
+  <include file="db/changelog/ddl/ddl-0004-schema-optimizations.xml"/>
 
 </databaseChangeLog>

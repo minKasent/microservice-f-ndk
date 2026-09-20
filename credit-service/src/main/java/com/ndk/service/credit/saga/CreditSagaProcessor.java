@@ -117,12 +117,10 @@ public class CreditSagaProcessor {
 
   private void saveProcessedCommand(SagaCommand command, SagaReply reply) {
     String resultPayload = null;
-    if (reply.getPayload() != null) {
-      try {
-        resultPayload = objectMapper.writeValueAsString(reply.getPayload());
-      } catch (JsonProcessingException e) {
-        log.error("Failed to serialize reply payload - SagaId: {}", command.getSagaId());
-      }
+    try {
+      resultPayload = objectMapper.writeValueAsString(reply);
+    } catch (JsonProcessingException e) {
+      log.error("Failed to serialize reply - SagaId: {}", command.getSagaId(), e);
     }
     processedSagaCommandRepository.save(ProcessedSagaCommand.builder()
         .idempotencyKey(command.getIdempotencyKey())

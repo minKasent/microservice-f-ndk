@@ -9,6 +9,7 @@
 <!--  SCHEMA, TABLE CHANGE-->
   <include file="db/changelog/ddl/ddl-0001-init-credit-tables.xml"/>
   <include file="db/changelog/ddl/ddl-0002-create-processed-saga-commands-table.xml"/>
+  <include file="db/changelog/ddl/ddl-0003-add-frozen-balance-and-reference-id-index.xml"/>
 
 
 <!--  DATA CHANGE-->
