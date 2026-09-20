@@ -31,7 +31,7 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
       retries: 3
-      compression-type: snappy
+      compression-type: ${KAFKA_COMPRESSION_TYPE:none}
       batch-size: 16384
       linger-ms: 10
     consumer:

@@ -16,6 +16,24 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: purchase-saga-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: manual
+
   security:
     oauth2:
       resource-server:
@@ -26,3 +44,10 @@ spring:
 purchase:
   platform-fee-rate: 0.30      # 30% platform fee
   creator-commission-rate: 0.70 # 70% creator commission
+  saga:
+    enabled: true
+    reply-topic: purchase.saga-replies
+    credit-command-topic: purchase.credit-command
+    content-command-topic: purchase.content-command
+    timeout-seconds: 30
+    max-retries: 3

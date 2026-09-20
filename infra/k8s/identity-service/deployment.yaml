@@ -1,0 +1,101 @@
+# =============================================================================
+# Deployment: identity-service
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: identity-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: identity-service
+
+  template:
+    metadata:
+      labels:
+        app: identity-service
+        app.kubernetes.io/name: identity-service
+        app.kubernetes.io/part-of: devsharing
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+        - name: identity-service
+          image: devsharing-identity:2.0.0
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 8080
+              name: http
+
+          envFrom:
+            # ConfigMap riêng của identity-service
+            - configMapRef:
+                name: identity-service-config
+            # ConfigMap OTEL dùng chung
+            - configMapRef:
+                name: otel-common-config
+            # ConfigMap Spring Cloud dùng chung (EUREKA_URI, SPRING_CLOUD_CONFIG_URI, LOKI_URL, FEIGN_*_URL)
+            - configMapRef:
+                name: spring-common-config
+            # ConfigMap Base URLs dùng chung (BASE_GATEWAY_URL, BASE_IDENTITY_URL)
+            - configMapRef:
+                name: base-urls-config
+
+          env:
+            # Bước 1: Compose base URLs từ PROTOCOL + HOST
+            - name: BASE_GATEWAY_URL
+              value: "$(GATEWAY_PROTOCOL)://$(GATEWAY_HOST)"
+            
+            - name: BASE_IDENTITY_URL
+              value: "$(IDENTITY_PROTOCOL)://$(IDENTITY_HOST)"
+            
+            # Bước 2: Compose API URLs từ base URLs + paths
+            - name: API_DOCS_SERVER
+              value: "$(BASE_GATEWAY_URL)$(API_DOCS_PATH)"
+            
+            - name: API_DOCS_OAUTH2_AUTH_URL
+              value: "$(BASE_IDENTITY_URL)$(OAUTH2_AUTHORIZE_PATH)"
+            
+            - name: API_DOCS_OAUTH2_TOKEN_URL
+              value: "$(BASE_IDENTITY_URL)$(OAUTH2_TOKEN_PATH)"
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 30
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "768Mi"
+              cpu: "1000m" 

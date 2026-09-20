@@ -1,0 +1,57 @@
+# =============================================================================
+# ConfigMap: Grafana Dashboards
+# =============================================================================
+# ConfigMap này chứa các pre-built dashboards từ Grafana community.
+# Các dashboards này được thiết kế cho Spring Boot applications với Micrometer.
+#
+# Dashboards included:
+#   1. JVM (Micrometer) - ID: 4701
+#      - JVM memory, GC, threads, classes
+#   2. Spring Boot Statistics - ID: 11378
+#      - HTTP metrics, JVM, system metrics
+#   3. Spring Boot Observability - ID: 17175
+#      - Comprehensive Spring Boot monitoring
+#
+# Note: Dashboards sẽ được auto-provisioned khi Grafana khởi động
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: devsharing
+    grafana_dashboard: "1"
+data:
+  # Dashboard provisioning config
+  dashboard-provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'DevSharing'
+        orgId: 1
+        folder: 'Spring Boot'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards/devsharing
+  
+  # Dashboard URLs để import tự động
+  # Grafana sẽ download và provision các dashboards này
+  dashboard-urls.yaml: |
+    # JVM (Micrometer) - Dashboard 4701
+    # https://grafana.com/grafana/dashboards/4701
+    - url: https://grafana.com/api/dashboards/4701/revisions/7/download
+      datasource: Prometheus
+    
+    # Spring Boot 2.1 Statistics - Dashboard 11378
+    # https://grafana.com/grafana/dashboards/11378
+    - url: https://grafana.com/api/dashboards/11378/revisions/9/download
+      datasource: Prometheus
+    
+    # Spring Boot Observability - Dashboard 17175
+    # https://grafana.com/grafana/dashboards/17175
+    - url: https://grafana.com/api/dashboards/17175/revisions/2/download
+      datasource: Prometheus

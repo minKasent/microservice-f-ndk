@@ -16,6 +16,11 @@ spring:
           notification-service:
             connect-timeout: ${FEIGN_CLIENT_NOTIFICATION_CONNECT_TIMEOUT}
             read-timeout: ${FEIGN_CLIENT_NOTIFICATION_READ_TIMEOUT}
+            url: ${FEIGN_NOTIFICATION_URL:http://notification-service:8004}
+          credit-service:
+            connect-timeout: ${FEIGN_CLIENT_CREDIT_CONNECT_TIMEOUT:5000}
+            read-timeout: ${FEIGN_CLIENT_CREDIT_READ_TIMEOUT:5000}
+            url: ${FEIGN_CREDIT_URL:http://credit-service:8002}
 
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml

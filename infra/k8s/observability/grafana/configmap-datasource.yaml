@@ -1,0 +1,42 @@
+# =============================================================================
+# ConfigMap: Grafana Datasource Configuration
+# =============================================================================
+# ConfigMap này chứa cấu hình datasource cho Grafana.
+# Grafana sẽ tự động load datasource từ file này khi khởi động.
+#
+# Datasource:
+#   - Name: Prometheus
+#   - Type: prometheus
+#   - URL: http://prometheus:9090 (internal Service URL)
+#   - Access: proxy (Grafana server sẽ proxy requests đến Prometheus)
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: devsharing
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    
+    # Xóa tất cả datasources cũ khi restart
+    deleteDatasources:
+      - name: Prometheus
+        orgId: 1
+    
+    # Định nghĩa datasources
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        orgId: 1
+        uid: prometheus-uid
+        url: http://prometheus:9090
+        isDefault: true
+        editable: true
+        jsonData:
+          httpMethod: POST
+          timeInterval: 15s

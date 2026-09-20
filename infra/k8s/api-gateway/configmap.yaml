@@ -1,0 +1,33 @@
+# =============================================================================
+# ConfigMap: api-gateway
+# =============================================================================
+# API Gateway là "cổng vào" duy nhất của hệ thống từ bên ngoài.
+# Tất cả request từ client (browser, mobile app) đều đi qua đây trước
+# khi được route đến các microservice phù hợp.
+#
+# Vai trò của API Gateway trong devsharing:
+#   - Route request theo path prefix (e.g. /identity/** → identity-service)
+#   - Xác thực JWT token trước khi forward request
+#   - Load balancing giữa các instance của cùng một service
+#   - Tích hợp với Eureka để tự động discover địa chỉ của các service
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: devsharing
+data:
+  # Tên service này trong hệ thống OTEL tracing
+  OTEL_SERVICE_NAME: "api-gateway"
+
+  GATEWAY_URI_CREDIT_SERVICE: "http://credit-service.devsharing.svc.cluster.local:8080"
+  GATEWAY_URI_CONTENT_SERVICE: "http://content-service.devsharing.svc.cluster.local:8080"
+  GATEWAY_URI_IDENTITY_SERVICE: "http://identity-service.devsharing.svc.cluster.local:8080"
+  GATEWAY_URI_MENTORING_SERVICE: "http://mentoring-service.devsharing.svc.cluster.local:8080"
+  GATEWAY_URI_NOTIFICATION_SERVICE: "http://notification-service.devsharing.svc.cluster.local:8080"
+  GATEWAY_URI_PURCHASE_SERVICE: "http://purchase-service.devsharing.svc.cluster.local:8080"
+  GATEWAY_URI_RATING_SERVICE: "http://rating-service.devsharing.svc.cluster.local:8080"
+  GATEWAY_URI_REPORTING_SERVICE: "http://reporting-service.devsharing.svc.cluster.local:8080"

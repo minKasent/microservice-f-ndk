@@ -1,0 +1,74 @@
+# =============================================================================
+# Deployment: config-server (Spring Cloud Config Server)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: config-server
+    app.kubernetes.io/part-of: devsharing
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: config-server
+
+  template:
+    metadata:
+      labels:
+        app: config-server
+        app.kubernetes.io/name: config-server
+        app.kubernetes.io/part-of: devsharing
+    spec:
+      containers:
+        - name: config-server
+          image: devsharing-config:2.0.0
+          # imagePullPolicy: Never → dùng image local đã import vào k3d
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 6969
+              name: http
+
+          envFrom:
+            # ConfigMap riêng của config-server (OTEL_SERVICE_NAME, SERVER_PORT)
+            - configMapRef:
+                name: config-server-config
+            # ConfigMap OTEL dùng chung
+            - configMapRef:
+                name: otel-common-config
+
+          startupProbe:
+            httpGet:
+              path: /application/default
+              port: 6969
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 30
+
+          livenessProbe:
+            httpGet:
+              path: /application/default
+              port: 6969
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /application/default
+              port: 6969
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "150m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"

@@ -1,0 +1,71 @@
+# =============================================================================
+# ConfigMap: identity-service
+# =============================================================================
+# Identity Service chịu trách nhiệm xác thực và phân quyền (Authentication &
+# Authorization) trong hệ thống devsharing. Cụ thể:
+#   - Đăng ký / đăng nhập người dùng
+#   - Cấp phát JWT token (access token + refresh token)
+#   - Quản lý thông tin người dùng (profile)
+#   - OAuth2 Authorization Server
+#
+# Service này expose ra ngoài bằng NodePort vì:
+#   - Client cần gọi trực tiếp để đăng nhập / lấy token (qua API Gateway)
+#   - Swagger UI / API Docs cần truy cập được từ browser
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-service-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: identity-service
+    app.kubernetes.io/part-of: devsharing
+data:
+  # Tên service này trong hệ thống OTEL tracing
+  OTEL_SERVICE_NAME: "identity-service"
+
+  # Port nội bộ của container
+  SERVER_PORT: "8080"
+
+  # Spring profile đang active (dev/prod/k8s...)
+  # Tùy chỉnh theo môi trường triển khai thực tế
+  SPRING_PROFILES_ACTIVE: "swagger"
+
+  # Bật/tắt bảo mật trên Swagger UI (OAuth2 integration)
+  API_DOCS_SECURITY_ENABLED: "false"
+
+  # Path suffix cho API Docs và OAuth2 endpoints
+  # Sẽ được compose với BASE_GATEWAY_URL và BASE_IDENTITY_URL từ base-urls-config
+  API_DOCS_PATH: "/identity"
+  OAUTH2_AUTHORIZE_PATH: "/oauth2/authorize"
+  OAUTH2_TOKEN_PATH: "/oauth2/token"
+
+  # URL JDBC kết nối MySQL (chạy trên host machine qua Docker bridge 172.23.0.1)
+  # createDatabaseIfNotExist=true: tự tạo database nếu chưa tồn tại
+  DB_URL: "jdbc:mysql://172.23.0.1:3306/identity_service?createDatabaseIfNotExist=true"
+  DB_USER: "root"
+  DB_PASSWORD: "root"
+
+  # OpenFeign dùng OkHttp làm HTTP client thay vì default
+  OPENFEIGN_OKHTTP_ENABLED: "true"
+
+  # Timeout khi gọi Notification Service qua Feign (milliseconds)
+  FEIGN_CLIENT_NOTIFICATION_CONNECT_TIMEOUT: "5000"
+  FEIGN_CLIENT_NOTIFICATION_READ_TIMEOUT: "10000"
+
+  # Timeout khi gọi Credit Service qua Feign (milliseconds)
+  FEIGN_CLIENT_CREDIT_CONNECT_TIMEOUT: "5000"
+  FEIGN_CLIENT_CREDIT_READ_TIMEOUT: "10000"
+
+  # Credentials dùng để gọi internal Notification Service (Basic Auth)
+  INTERNAL_NOTIFICATION_SERVICE_CREDENTIALS_USER: "user"
+  INTERNAL_NOTIFICATION_SERVICE_CREDENTIALS_PASSWORD: "password"
+
+  # Credentials dùng để gọi internal Credit Service (Basic Auth)
+  INTERNAL_CREDIT_SERVICE_CREDENTIALS_USER: "user"
+  INTERNAL_CREDIT_SERVICE_CREDENTIALS_PASSWORD: "password"
+
+  # Tự động sinh RSA key pair cho JWT khi khởi động
+  # true: tiện cho dev/test, mỗi lần restart key sẽ khác
+  # false: cần mount key từ Secret
+  JWT_AUTO_KEYGEN: "true"

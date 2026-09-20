@@ -1,0 +1,21 @@
+# =============================================================================
+# Namespace: devsharing
+# =============================================================================
+# Namespace trong K8s là cơ chế phân vùng logic giúp tổ chức và cô lập
+# các tài nguyên trong cùng một cluster.
+#
+# Lợi ích của Namespace:
+#   - Cô lập tài nguyên: resource của namespace này không xung đột với namespace khác
+#   - Quản lý phân quyền (RBAC): gán quyền theo namespace
+#   - Giới hạn tài nguyên: áp dụng ResourceQuota theo namespace
+#   - Môi trường: có thể tạo namespace "dev", "staging", "prod" trong cùng cluster
+#
+# TẤT CẢ các manifest trong thư mục k8s/ đều dùng namespace "devsharing".
+# Phải tạo namespace này TRƯỚC khi apply các manifest khác.
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devsharing
+  labels:
+    app.kubernetes.io/part-of: devsharing

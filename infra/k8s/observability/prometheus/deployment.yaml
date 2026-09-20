@@ -1,0 +1,108 @@
+# =============================================================================
+# Deployment: Prometheus Server
+# =============================================================================
+# Prometheus server để scrape metrics từ các DevSharing services.
+#
+# Tính năng chính:
+#   - Kubernetes Service Discovery: Tự động phát hiện pods
+#   - RBAC enabled: Sử dụng ServiceAccount "prometheus"
+#   - ConfigMap mount: Load config từ prometheus-config ConfigMap
+#   - Persistent storage: (Optional) Mount volume để lưu metrics data
+#   - Resource limits: Giới hạn CPU/Memory
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: devsharing
+spec:
+  replicas: 1
+  
+  selector:
+    matchLabels:
+      app: prometheus
+  
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        app.kubernetes.io/name: prometheus
+        app.kubernetes.io/part-of: devsharing
+    spec:
+      # ServiceAccount với RBAC permissions để access K8s API
+      serviceAccountName: prometheus
+      
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.48.0
+          imagePullPolicy: IfNotPresent
+          
+          # Arguments để start Prometheus
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.retention.time=15d'  # Giữ metrics trong 15 ngày
+            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+            - '--web.console.templates=/usr/share/prometheus/consoles'
+            - '--web.enable-lifecycle'  # Enable reload config qua HTTP POST
+          
+          ports:
+            - name: http
+              containerPort: 9090
+              protocol: TCP
+          
+          # Volume mounts
+          volumeMounts:
+            # Mount ConfigMap chứa prometheus.yml
+            - name: config
+              mountPath: /etc/prometheus
+            
+            # Mount volume để lưu metrics data
+            # Trong production nên dùng PersistentVolumeClaim
+            - name: storage
+              mountPath: /prometheus
+          
+          # Liveness probe - kiểm tra Prometheus còn sống không
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Readiness probe - kiểm tra Prometheus đã sẵn sàng nhận traffic chưa
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Resource requests và limits
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+      
+      # Volumes
+      volumes:
+        # ConfigMap volume chứa prometheus.yml
+        - name: config
+          configMap:
+            name: prometheus-config
+        
+        # EmptyDir volume để lưu metrics data
+        # Lưu ý: EmptyDir sẽ mất data khi Pod restart
+        # Production nên dùng PersistentVolumeClaim
+        - name: storage
+          emptyDir: {}

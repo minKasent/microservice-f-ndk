@@ -1,0 +1,35 @@
+# =============================================================================
+# Service: discovery-service (Eureka Server)
+# =============================================================================
+# Service trong K8s là một "virtual IP" ổn định để truy cập vào nhóm Pod.
+# Dù Pod bị xóa/tạo lại với IP mới, địa chỉ DNS của Service không đổi.
+#
+# Các service khác trong cluster truy cập Eureka qua:
+#   http://discovery-service.devsharing.svc.cluster.local:8761
+#
+# Type ClusterIP: chỉ truy cập được từ bên trong cluster — phù hợp với
+# Eureka vì chỉ các microservice nội bộ cần đăng ký vào đây.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: discovery-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: discovery-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  # ClusterIP: Service chỉ có thể truy cập từ bên trong cluster K8s
+  # Không expose ra ngoài → bảo mật hơn cho internal services
+  type: ClusterIP
+
+  # selector: Service sẽ forward traffic đến các Pod có label này
+  # Phải khớp với labels của Pod trong Deployment
+  selector:
+    app: discovery-service
+
+  ports:
+    - name: http
+      port: 8761         # Port mà Service lắng nghe (port của Service trong cluster)
+      targetPort: 8761   # Port của container trong Pod mà traffic được forward đến
+      protocol: TCP

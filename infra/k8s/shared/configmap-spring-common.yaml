@@ -1,0 +1,43 @@
+# =============================================================================
+# ConfigMap dùng chung: Cấu hình Spring Cloud (Eureka + Config Server + Feign + JWT)
+# =============================================================================
+# Các microservice trong hệ thống đều cần biết:
+#   1. Config Server ở đâu để lấy cấu hình tập trung
+#   2. Eureka (Discovery Service) ở đâu để đăng ký và tìm kiếm nhau
+#   3. Feign Client URLs để gọi trực tiếp qua K8s Service DNS (nội bộ cluster)
+#   4. JWK Set URI để xác thực token JWT giữa các resource server
+#
+# Trong K8s, các service giao tiếp nhau qua DNS nội bộ của cluster theo dạng:
+#   <service-name>.<namespace>.svc.cluster.local:<port>
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-common-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/part-of: devsharing
+    app.kubernetes.io/component: spring-cloud
+data:
+  # URI của Config Server — Spring Boot dùng để bootstrap cấu hình
+  SPRING_CLOUD_CONFIG_URI: "http://config-server.devsharing.svc.cluster.local:6969"
+
+  # URI của Eureka Discovery Server
+  EUREKA_URI: "http://discovery-service.devsharing.svc.cluster.local:8761/eureka"
+
+  # URL của Loki (Log aggregation trên host machine qua Docker bridge 172.23.0.1)
+  LOKI_URL: "http://172.23.0.1:3100/loki/api/v1/push"
+
+  # Kafka bootstrap servers cho K8s pods
+  KAFKA_BOOTSTRAP_SERVERS: "172.23.0.1:29092"
+
+  # Feign Client URLs nội bộ K8s (Các business service lắng nghe port 8080)
+  FEIGN_NOTIFICATION_URL: "http://notification-service.devsharing.svc.cluster.local:8080"
+  FEIGN_CREDIT_URL: "http://credit-service.devsharing.svc.cluster.local:8080"
+  FEIGN_CONTENT_URL: "http://content-service.devsharing.svc.cluster.local:8080"
+  FEIGN_PURCHASE_URL: "http://purchase-service.devsharing.svc.cluster.local:8080"
+  FEIGN_IDENTITY_URL: "http://identity-service.devsharing.svc.cluster.local:8080"
+
+  # OAuth2 Resource Server JWT Validation (Gọi tới Identity Service trên port 8080)
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://identity-service.devsharing.svc.cluster.local:8080/oauth2/jwks"
+  OAUTH2_ISSUER_URI: "http://identity-service.devsharing.svc.cluster.local:8080"

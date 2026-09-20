@@ -1,0 +1,33 @@
+# =============================================================================
+# Service: content-service — Type: ClusterIP
+# =============================================================================
+# Content Service chỉ cần truy cập nội bộ — client truy cập thông qua
+# API Gateway, không cần expose trực tiếp ra ngoài.
+#
+# DNS nội bộ:
+#   - http://content-service.devsharing.svc.cluster.local:8080
+#   - http://content-service.devsharing.svc.cluster.local:8003 (legacy mapping)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: content-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: content-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  type: ClusterIP
+
+  selector:
+    app: content-service
+
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: legacy
+      port: 8003
+      targetPort: 8080
+      protocol: TCP

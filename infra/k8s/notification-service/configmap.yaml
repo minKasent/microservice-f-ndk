@@ -1,0 +1,58 @@
+# =============================================================================
+# ConfigMap: notification-service
+# =============================================================================
+# Notification Service chịu trách nhiệm gửi thông báo (email, push notification...)
+# cho người dùng trong hệ thống devsharing.
+#
+# Service này có một số điểm đặc biệt so với các service khác:
+#   - Dùng MongoDB để lưu trữ notification (NoSQL — phù hợp với dữ liệu không cấu trúc)
+#   - Consume message từ Kafka (event-driven: nhận event từ các service khác)
+#   - Có Basic Auth để bảo vệ các internal endpoint
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notification-service-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: devsharing
+data:
+  # Tên service này trong hệ thống OTEL tracing
+  OTEL_SERVICE_NAME: "notification-service"
+
+  # Port nội bộ của container
+  SERVER_PORT: "8080"
+
+  # Spring profile đang active
+  SPRING_PROFILES_ACTIVE: "swagger"
+
+  # Bật/tắt bảo mật trên Swagger UI (OAuth2 integration)
+  API_DOCS_SECURITY_ENABLED: "false"
+
+  # Path suffix cho API Docs
+  # Sẽ được compose với BASE_GATEWAY_URL từ base-urls-config
+  API_DOCS_PATH: "/notification"
+
+  # OAuth2 endpoint paths
+  # Sẽ được compose với BASE_IDENTITY_URL từ base-urls-config
+  OAUTH2_AUTHORIZE_PATH: "/oauth2/authorize"
+  OAUTH2_TOKEN_PATH: "/oauth2/token"
+
+  # URL JDBC kết nối MySQL (chạy trên host machine qua Docker bridge 172.23.0.1)
+  DB_URL: "jdbc:mysql://172.23.0.1:3306/notification_service?createDatabaseIfNotExist=true"
+  DB_USER: "root"
+  DB_PASSWORD: "root"
+
+  # Credentials cho Basic Auth của notification-service
+  # Các service khác (identity, credit...) dùng credentials này khi gọi internal API
+  BASIC_CREDENTIALS_USER: "user"
+  BASIC_CREDENTIALS_PASSWORD: "password"
+
+  # URI kết nối MongoDB (chạy trên host machine qua Docker bridge 172.23.0.1)
+  MONGO_DB_URI: "mongodb://root:password@172.23.0.1:27017/notification_service?authSource=admin"
+
+  # Địa chỉ Kafka Bootstrap Server (chạy trên host machine qua Docker bridge 172.23.0.1, cổng 29092 cho K8s)
+  KAFKA_BOOTSTRAP_SERVERS: "172.23.0.1:29092"
+  KAFKA_COMPRESSION_TYPE: "none"
+  SPRING_KAFKA_PRODUCER_COMPRESSION_TYPE: "none"

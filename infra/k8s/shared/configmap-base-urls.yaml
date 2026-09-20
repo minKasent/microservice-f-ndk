@@ -1,0 +1,51 @@
+# =============================================================================
+# ConfigMap dùng chung: Base URLs
+# =============================================================================
+# ConfigMap này chứa các thành phần cơ bản để build URLs cho hệ thống.
+# Thiết kế để hỗ trợ cả môi trường local (NodePort / k3d) và production (Ingress).
+#
+# Môi trường LOCAL (k3d với NodePort):
+#   GATEWAY_PROTOCOL: "http"
+#   GATEWAY_HOST: "localhost:30888" (hoặc 127.0.0.1:30888)
+#   → BASE_GATEWAY_URL = http://localhost:30888
+#
+# Môi trường PRODUCTION (Ingress với domain):
+#   GATEWAY_PROTOCOL: "https"
+#   GATEWAY_HOST: "api.devsharing.com"
+#   → BASE_GATEWAY_URL = https://api.devsharing.com
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: base-urls-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/part-of: devsharing
+    app.kubernetes.io/component: base-config
+data:
+  # =============================================================================
+  # API Gateway Configuration
+  # =============================================================================
+  GATEWAY_PROTOCOL: "http"
+
+  # Local:      localhost:30888
+  # Production: api.devsharing.com
+  GATEWAY_HOST: "localhost:30888"
+
+  # =============================================================================
+  # Identity Service Configuration
+  # =============================================================================
+  IDENTITY_PROTOCOL: "http"
+
+  # Local:      localhost:30001
+  # Production: auth.devsharing.com
+  IDENTITY_HOST: "localhost:30001"
+
+  # =============================================================================
+  # Swagger UI Configuration
+  # =============================================================================
+  SWAGGER_UI_PROTOCOL: "http"
+
+  # Local:      localhost:30080
+  # Production: docs.devsharing.com
+  SWAGGER_UI_HOST: "localhost:30080"

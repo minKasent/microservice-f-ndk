@@ -1,0 +1,44 @@
+# =============================================================================
+# Service: api-gateway — Type: NodePort
+# =============================================================================
+# NodePort là cách đơn giản nhất để expose một Service ra ngoài cluster K8s.
+#
+# Cách hoạt động của NodePort:
+#   - K8s mở một port cố định trên TẤT CẢ các Node (máy chủ) trong cluster
+#   - Traffic gửi đến <NodeIP>:<nodePort> sẽ được forward vào container
+#
+# Trong k3d local:
+#   - NodeIP thường là 127.0.0.1 (localhost) hoặc IP của k3d container
+#   - Truy cập: http://localhost:30888
+#
+# Dải port hợp lệ của NodePort: 30000–32767
+#
+# So sánh Service types:
+#   ClusterIP  → chỉ truy cập nội bộ cluster (default)
+#   NodePort   → expose ra ngoài qua port trên Node
+#   LoadBalancer → tạo cloud load balancer (dùng trên cloud như AWS/GCP/Azure)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: devsharing
+spec:
+  # NodePort: expose Service ra bên ngoài cluster thông qua port của Node
+  type: NodePort
+
+  selector:
+    app: api-gateway
+
+  ports:
+    - name: http
+      port: 8888           # Port của Service trong cluster (ClusterIP port)
+      targetPort: 8888     # Port của container trong Pod
+      # nodePort: port mở trên Node để nhận traffic từ bên ngoài
+      # Range hợp lệ: 30000-32767
+      # Nếu bỏ trống, K8s sẽ tự động chọn một port trong dải trên
+      nodePort: 30888
+      protocol: TCP

@@ -1,0 +1,26 @@
+# =============================================================================
+# ConfigMap: config-server (Spring Cloud Config Server)
+# =============================================================================
+# Config Server là dịch vụ quản lý cấu hình tập trung cho toàn bộ microservice.
+# Thay vì mỗi service có file application.yml riêng, tất cả cấu hình được lưu
+# tại một nơi (thường là Git repo) và Config Server serve ra cho các service.
+#
+# Luồng hoạt động:
+#   1. Config Server kết nối tới Git repo chứa cấu hình
+#   2. Các microservice gọi Config Server khi bootstrap để lấy config
+#   3. Cấu hình được inject vào context của Spring Boot
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-server-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: config-server
+    app.kubernetes.io/part-of: devsharing
+data:
+  # Tên service này trong hệ thống OTEL tracing
+  OTEL_SERVICE_NAME: "config-server"
+
+  # Port mà Config Server lắng nghe
+  SERVER_PORT: "6969"

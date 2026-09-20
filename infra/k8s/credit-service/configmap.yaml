@@ -1,0 +1,48 @@
+# =============================================================================
+# ConfigMap: credit-service
+# =============================================================================
+# Credit Service quản lý hệ thống tín dụng / điểm thưởng (credits) của người
+# dùng trong devsharing. Ví dụ: mua khóa học, nhận thưởng, tiêu điểm...
+#
+# Service này được bảo vệ bằng Basic Auth cho các internal endpoint,
+# tránh các service không được phép gọi trực tiếp.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: credit-service-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: credit-service
+    app.kubernetes.io/part-of: devsharing
+data:
+  # Tên service này trong hệ thống OTEL tracing
+  OTEL_SERVICE_NAME: "credit-service"
+
+  # Port nội bộ của container
+  SERVER_PORT: "8080"
+
+  # Spring profile đang active
+  SPRING_PROFILES_ACTIVE: "swagger"
+
+  # Bật/tắt bảo mật trên Swagger UI (OAuth2 integration)
+  API_DOCS_SECURITY_ENABLED: "false"
+
+  # Path suffix cho API Docs
+  # Sẽ được compose với BASE_GATEWAY_URL từ base-urls-config
+  API_DOCS_PATH: "/credit"
+
+  # OAuth2 endpoint paths
+  # Sẽ được compose với BASE_IDENTITY_URL từ base-urls-config
+  OAUTH2_AUTHORIZE_PATH: "/oauth2/authorize"
+  OAUTH2_TOKEN_PATH: "/oauth2/token"
+
+  # URL JDBC kết nối MySQL (chạy trên host machine qua Docker bridge 172.23.0.1)
+  DB_URL: "jdbc:mysql://172.23.0.1:3306/credit_service?createDatabaseIfNotExist=true"
+  DB_USER: "root"
+  DB_PASSWORD: "root"
+
+  # Credentials Basic Auth cho internal endpoint của credit-service
+  # Service identity sẽ dùng credentials này để gọi credit-service
+  BASIC_CREDENTIALS_USER: "user"
+  BASIC_CREDENTIALS_PASSWORD: "password"

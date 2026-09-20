@@ -2,10 +2,12 @@ server:
   port: 6969
 
 spring:
+  application:
+    name: config-server
   profiles:
     include: native
   cloud:
     config:
       server:
         native:
-          search-locations: file:/D:\Khoa\Microservice-F\config-server\configs
+          search-locations: ${CONFIG_SEARCH_LOCATIONS:file:/app/configs,file:./configs,file:./config-server/configs}

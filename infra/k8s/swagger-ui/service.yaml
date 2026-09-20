@@ -1,0 +1,34 @@
+# =============================================================================
+# Service: swagger-ui — Type: NodePort
+# =============================================================================
+# Swagger UI cần expose ra ngoài để developer có thể truy cập từ browser
+# và test API. Dùng NodePort để dễ dàng truy cập từ localhost.
+#
+# Truy cập từ bên ngoài:
+#   http://localhost:30080/swagger-ui
+#
+# Từ đây có thể xem và test tất cả API của các microservice trong hệ thống.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: swagger-ui
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: swagger-ui
+    app.kubernetes.io/part-of: devsharing
+spec:
+  # NodePort: expose Service ra bên ngoài cluster
+  type: NodePort
+
+  selector:
+    app: swagger-ui
+
+  ports:
+    - name: http
+      port: 8080           # Port của Service trong cluster
+      targetPort: 8080     # Port của container
+      # nodePort tương ứng với port 8080 trong docker-compose
+      # Chọn 30080 để dễ nhớ (80 ở cuối giống HTTP)
+      nodePort: 30080
+      protocol: TCP

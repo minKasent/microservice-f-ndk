@@ -31,6 +31,7 @@ import com.ndk.purchase.repository.LibraryRepository;
 import com.ndk.purchase.repository.PurchaseRepository;
 import com.ndk.purchase.repository.PurchaseTransactionRepository;
 import com.ndk.purchase.service.PurchaseService;
+import com.ndk.purchase.saga.PurchaseSagaOrchestrator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -70,8 +71,19 @@ public class PurchaseServiceImpl implements PurchaseService {
   @Value("${purchase.creator-commission-rate:0.70}")
   private BigDecimal creatorCommissionRate;
 
+  @Value("${purchase.saga.enabled:true}")
+  private boolean sagaEnabled;
+
+  private final PurchaseSagaOrchestrator sagaOrchestrator;
+
   @Override
   public PurchaseDto purchaseContent(String buyerId, PurchaseContentRequest request) {
+    if (sagaEnabled) {
+      log.info("Saga mode enabled - delegating to saga orchestrator - BuyerId: {}, ContentId: {}",
+          buyerId, request.getContentId());
+      return sagaOrchestrator.initiateSaga(buyerId, request);
+    }
+
     // Step 1: Check if already owned
     if (libraryRepository.existsByUserIdAndContentId(buyerId, request.getContentId())) {
       throw new DevSharingException(ExceptionEnum.CONTENT_ALREADY_OWNED, null);

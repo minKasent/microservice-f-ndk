@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="purchase-0006-create-purchase-saga-table" author="foxlearing">
+    <preConditions onFail="MARK_RAN">
+      <not><tableExists tableName="purchase_saga"/></not>
+    </preConditions>
+
+    <createTable tableName="purchase_saga">
+      <column name="id" type="BIGINT UNSIGNED" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="saga_id" type="VARCHAR(36)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="purchase_id" type="BIGINT UNSIGNED">
+        <constraints nullable="false"/>
+      </column>
+      <column name="current_step" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="saga_data" type="JSON">
+        <constraints nullable="false"/>
+      </column>
+      <column name="retry_count" type="INT" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_error" type="TEXT"/>
+      <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="completed_at" type="TIMESTAMP"/>
+    </createTable>
+
+    <createIndex tableName="purchase_saga" indexName="idx_saga_purchase_id">
+      <column name="purchase_id"/>
+    </createIndex>
+    <createIndex tableName="purchase_saga" indexName="idx_saga_updated_at">
+      <column name="updated_at"/>
+    </createIndex>
+
+    <addForeignKeyConstraint baseTableName="purchase_saga" baseColumnNames="purchase_id"
+                             constraintName="fk_saga_purchase"
+                             referencedTableName="purchase" referencedColumnNames="id"
+                             onDelete="CASCADE"/>
+  </changeSet>
+
+</databaseChangeLog>

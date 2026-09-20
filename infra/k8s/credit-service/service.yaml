@@ -1,0 +1,33 @@
+# =============================================================================
+# Service: credit-service — Type: ClusterIP
+# =============================================================================
+# Credit Service chỉ cần truy cập nội bộ — các service khác (identity, purchase)
+# gọi vào thông qua Feign client hoặc Eureka.
+#
+# DNS nội bộ:
+#   - http://credit-service.devsharing.svc.cluster.local:8080
+#   - http://credit-service.devsharing.svc.cluster.local:8002 (legacy mapping)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: credit-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: credit-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  type: ClusterIP
+
+  selector:
+    app: credit-service
+
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: legacy
+      port: 8002
+      targetPort: 8080
+      protocol: TCP

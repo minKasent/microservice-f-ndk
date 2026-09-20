@@ -1,4 +1,5 @@
 # OpenTelemetry Java Agent → Tempo (OTLP gRPC :4317)
+# Mock collector (in span ra console): MockTraceCollector, đổi endpoint thành http://localhost:4319
 # Copy các dòng -D... vào IntelliJ Run Configuration → VM options
 # (đổi service.name theo từng service)
 

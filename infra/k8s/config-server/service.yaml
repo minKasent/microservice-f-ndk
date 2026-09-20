@@ -1,0 +1,29 @@
+# =============================================================================
+# Service: config-server (Spring Cloud Config Server)
+# =============================================================================
+# Config Server cần được truy cập bởi tất cả microservice trong cluster
+# khi họ bootstrap và lấy cấu hình. Dùng ClusterIP là đủ vì chỉ cần
+# truy cập nội bộ.
+#
+# DNS nội bộ: http://config-server.devsharing.svc.cluster.local:6969
+# Giá trị này được dùng trong configmap-spring-common.yaml (SPRING_CLOUD_CONFIG_URI)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-server
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: config-server
+    app.kubernetes.io/part-of: devsharing
+spec:
+  type: ClusterIP
+
+  selector:
+    app: config-server
+
+  ports:
+    - name: http
+      port: 6969
+      targetPort: 6969
+      protocol: TCP

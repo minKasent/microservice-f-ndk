@@ -1,0 +1,30 @@
+# =============================================================================
+# ConfigMap dùng chung: Cấu hình OpenTelemetry (OTEL)
+# =============================================================================
+# OpenTelemetry là bộ công cụ observability dùng để thu thập traces, metrics,
+# và logs từ các microservice rồi gửi tới backend (Tempo, Jaeger, Prometheus...).
+#
+# ConfigMap này được mount vào TẤT CẢ các service trong hệ thống.
+# Khi cần thay đổi endpoint OTEL, chỉ cần sửa tại đây — không cần sửa từng service.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-common-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/part-of: devsharing
+    app.kubernetes.io/component: observability
+data:
+  # Giao thức truyền dữ liệu OTEL: "grpc" hoặc "http/protobuf"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+
+  # Endpoint của OTEL Collector / Tempo (chạy trên host machine qua Docker bridge 172.23.0.1)
+  # Port 4317 dành cho gRPC protocol
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://172.23.0.1:4317"
+
+  # Exporter cấu hình cho Traces, Metrics, Logs
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "none"
+  OTEL_LOGS_EXPORTER: "otlp"
+  OTEL_PROPAGATORS: "tracecontext,baggage"

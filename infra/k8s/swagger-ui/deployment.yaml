@@ -1,0 +1,90 @@
+# =============================================================================
+# Deployment: swagger-ui (API Documentation UI)
+# =============================================================================
+# Swagger UI là công cụ web UI để hiển thị và test API theo chuẩn OpenAPI.
+# Deployment này tổng hợp tất cả API docs của các microservice vào một nơi.
+#
+# Lưu ý: Container này cần một init script để build URLS array từ các
+# biến môi trường riêng lẻ. Vì Swagger UI chỉ nhận URLS dạng JSON array,
+# ta sẽ dùng command để tạo JSON từ env vars.
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swagger-ui
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: swagger-ui
+    app.kubernetes.io/part-of: devsharing
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: swagger-ui
+
+  template:
+    metadata:
+      labels:
+        app: swagger-ui
+        app.kubernetes.io/name: swagger-ui
+        app.kubernetes.io/part-of: devsharing
+    spec:
+      containers:
+        - name: swagger-ui
+          # Swagger UI official image
+          image: swaggerapi/swagger-ui:v5.29.3
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8080
+              name: http
+
+          # Nạp biến môi trường từ ConfigMap
+          envFrom:
+            - configMapRef:
+                name: swagger-ui-config
+
+          # Build URLS JSON array từ các biến môi trường riêng lẻ
+          # Swagger UI yêu cầu URLS phải là JSON array format:
+          # [{"url": "...", "name": "..."}, ...]
+          env:
+            - name: URLS
+              value: |
+                [
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_CREDIT_URL)", "name": "$(API_DOCS_CREDIT_NAME)"},
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_CONTENT_URL)", "name": "$(API_DOCS_CONTENT_NAME)"},
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_IDENTITY_URL)", "name": "$(API_DOCS_IDENTITY_NAME)"},
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_MENTORING_URL)", "name": "$(API_DOCS_MENTORING_NAME)"},
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_NOTIFICATION_URL)", "name": "$(API_DOCS_NOTIFICATION_NAME)"},
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_PURCHASE_URL)", "name": "$(API_DOCS_PURCHASE_NAME)"},
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_RATING_URL)", "name": "$(API_DOCS_RATING_NAME)"},
+                  {"url": "$(GATEWAY_URL)$(API_DOCS_REPORTING_URL)", "name": "$(API_DOCS_REPORTING_NAME)"}
+                ]
+
+          # Health check: Swagger UI phục vụ nội dung tại /swagger-ui (theo BASE_URL)
+          # Gọi vào path này để kiểm tra container có phản hồi không
+          livenessProbe:
+            httpGet:
+              path: /swagger-ui/
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /swagger-ui/
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # Swagger UI là static web app, không cần nhiều tài nguyên
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

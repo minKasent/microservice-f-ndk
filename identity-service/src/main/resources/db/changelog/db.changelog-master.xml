@@ -20,5 +20,6 @@
 
   <!-- DATA  -->
   <include file="db/changelog/data/data-0001-init-role-master-data.xml"/>
+  <include file="db/changelog/data/data-0002-init-oauth2-default-client.xml"/>
 
 </databaseChangeLog>

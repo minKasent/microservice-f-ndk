@@ -1,0 +1,80 @@
+# =============================================================================
+# Deployment: api-gateway
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/part-of: devsharing
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: api-gateway
+
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        app.kubernetes.io/name: api-gateway
+        app.kubernetes.io/part-of: devsharing
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8888"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+        - name: api-gateway
+          image: devsharing-api-gateway:2.0.0
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 8888
+              name: http
+
+          envFrom:
+            # ConfigMap riêng của api-gateway (OTEL_SERVICE_NAME)
+            - configMapRef:
+                name: api-gateway-config
+            # ConfigMap OTEL dùng chung (endpoint, protocol, exporters)
+            - configMapRef:
+                name: otel-common-config
+            # ConfigMap Spring Cloud dùng chung (EUREKA_URI, SPRING_CLOUD_CONFIG_URI)
+            - configMapRef:
+                name: spring-common-config
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 30
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "150m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"

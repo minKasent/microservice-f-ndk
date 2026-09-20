@@ -1,0 +1,33 @@
+# =============================================================================
+# Service: purchase-service — Type: ClusterIP
+# =============================================================================
+# Purchase Service chỉ cần truy cập nội bộ — client truy cập thông qua
+# API Gateway. Không cần expose trực tiếp ra ngoài.
+#
+# DNS nội bộ:
+#   - http://purchase-service.devsharing.svc.cluster.local:8080
+#   - http://purchase-service.devsharing.svc.cluster.local:8006 (legacy mapping)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: purchase-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: purchase-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  type: ClusterIP
+
+  selector:
+    app: purchase-service
+
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: legacy
+      port: 8006
+      targetPort: 8080
+      protocol: TCP

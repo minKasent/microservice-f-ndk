@@ -1,0 +1,137 @@
+# =============================================================================
+# Deployment: Grafana
+# =============================================================================
+# Grafana server để visualize metrics từ Prometheus.
+#
+# Tính năng:
+#   - Auto-load datasource từ ConfigMap
+#   - Auto-load dashboards từ ConfigMap (nếu có)
+#   - Persistent storage cho dashboards và settings
+#   - Anonymous access enabled (cho demo/dev)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: devsharing
+spec:
+  replicas: 1
+  
+  selector:
+    matchLabels:
+      app: grafana
+  
+  template:
+    metadata:
+      labels:
+        app: grafana
+        app.kubernetes.io/name: grafana
+        app.kubernetes.io/part-of: devsharing
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.2.3
+          imagePullPolicy: IfNotPresent
+          
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          
+          # Environment variables
+          env:
+            # Admin credentials
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+            
+            # Anonymous access (cho demo/dev)
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: "Admin"
+            
+            # Disable login form (optional, cho demo)
+            # - name: GF_AUTH_DISABLE_LOGIN_FORM
+            #   value: "true"
+            
+            # Server settings
+            - name: GF_SERVER_ROOT_URL
+              value: "http://localhost:30300"
+            
+            # Paths
+            - name: GF_PATHS_PROVISIONING
+              value: "/etc/grafana/provisioning"
+          
+          # Volume mounts
+          volumeMounts:
+            # Datasource provisioning
+            - name: datasource-config
+              mountPath: /etc/grafana/provisioning/datasources
+            
+            # Dashboard provisioning
+            - name: dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            
+            # Dashboards JSON files
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+            
+            # Storage cho Grafana data
+            - name: storage
+              mountPath: /var/lib/grafana
+          
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          # Resources
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+      
+      # Volumes
+      volumes:
+        # Datasource config từ ConfigMap
+        - name: datasource-config
+          configMap:
+            name: grafana-datasource
+        
+        # Dashboard provider config
+        - name: dashboard-provider
+          configMap:
+            name: grafana-dashboard-provider
+        
+        # Dashboard JSON files từ ConfigMap
+        - name: dashboards
+          configMap:
+            name: grafana-dashboard-devsharing
+        
+        # EmptyDir storage
+        # Production nên dùng PersistentVolumeClaim
+        - name: storage
+          emptyDir: {}

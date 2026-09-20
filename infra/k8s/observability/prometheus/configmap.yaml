@@ -1,0 +1,115 @@
+# =============================================================================
+# ConfigMap: Prometheus Configuration
+# =============================================================================
+# ConfigMap này chứa file cấu hình prometheus.yml cho Prometheus server.
+# 
+# Khác biệt so với Docker Compose:
+#   - Docker Compose: static_configs với IP cố định
+#   - Kubernetes: kubernetes_sd_configs với dynamic service discovery
+#
+# Kubernetes Service Discovery:
+#   - Tự động phát hiện pods mới/cũ khi scale up/down
+#   - Không cần restart Prometheus khi thêm/xóa pods
+#   - Filter pods theo annotations (prometheus.io/scrape, prometheus.io/port, ...)
+#   - Hỗ trợ relabeling để customize metrics labels
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: devsharing
+data:
+  prometheus.yml: |
+    # =============================================================================
+    # Global Configuration
+    # =============================================================================
+    global:
+      scrape_interval: 15s      # Scrape metrics mỗi 15 giây
+      evaluation_interval: 15s  # Evaluate rules mỗi 15 giây
+      
+      # External labels được thêm vào tất cả metrics
+      external_labels:
+        cluster: 'devsharing-k3d'
+        environment: 'local'
+
+    # =============================================================================
+    # Scrape Configurations
+    # =============================================================================
+    scrape_configs:
+      
+      # ---------------------------------------------------------------------------
+      # Job: Prometheus self-monitoring
+      # ---------------------------------------------------------------------------
+      # Scrape metrics của chính Prometheus server
+      # ---------------------------------------------------------------------------
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # ---------------------------------------------------------------------------
+      # Job: Kubernetes Pods (DevSharing Services)
+      # ---------------------------------------------------------------------------
+      # Sử dụng Kubernetes Service Discovery để tự động phát hiện pods
+      # trong namespace "devsharing" có annotation prometheus.io/scrape: "true"
+      # ---------------------------------------------------------------------------
+      - job_name: 'kubernetes-pods'
+        
+        # Kubernetes Service Discovery Configuration
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - devsharing
+        
+        # Relabel configurations
+        # Dùng để filter pods và customize labels
+        relabel_configs:
+          
+          # 1. Chỉ scrape pods có annotation prometheus.io/scrape: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          
+          # 2. Lấy metrics path từ annotation prometheus.io/path
+          #    Mặc định: /metrics
+          #    DevSharing services: /actuator/prometheus
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          
+          # 3. Lấy port từ annotation prometheus.io/port
+          #    Kết hợp với Pod IP để tạo __address__ (IP:PORT)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          
+          # 4. Thêm label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          
+          # 5. Thêm label: kubernetes_pod_name
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+          
+          # 6. Thêm label: app (từ pod label app=<service-name>)
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: replace
+            target_label: app
+          
+          # 7. Thêm label: pod_ip
+          - source_labels: [__meta_kubernetes_pod_ip]
+            action: replace
+            target_label: pod_ip
+          
+          # 8. Thêm label: node_name (node mà pod đang chạy)
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            action: replace
+            target_label: node_name

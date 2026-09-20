@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: simple-temporal-workflow
+
+server:
+  port: 8090
+
+# Cấu hình kết nối tới Temporal server.
+# Chạy kèm infra: docker compose -f infra/docker-compose.yml up -d temporal temporal-ui
+# (Temporal dùng chung MySQL: DB temporal + temporal_visibility)
+# gRPC: localhost:7233 | Web UI: http://localhost:8233
+temporal:
+  target: localhost:7233
+  namespace: default
+  task-queue: simple-money-transfer

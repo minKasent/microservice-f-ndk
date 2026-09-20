@@ -27,6 +27,9 @@ public class KafkaConfig {
   @Value("${notification.kafka.topic.replicas:1}")
   private int replicas;
 
+  @Value("${spring.kafka.producer.compression-type:none}")
+  private String compressionType;
+
   @Bean
   public NewTopic notificationTopic() {
     return TopicBuilder.name("notification.request")
@@ -43,7 +46,7 @@ public class KafkaConfig {
     config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
     config.put(ProducerConfig.ACKS_CONFIG, "all");
     config.put(ProducerConfig.RETRIES_CONFIG, 3);
-    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+    config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
     config.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
     config.put(ProducerConfig.LINGER_MS_CONFIG, 10);
     return new DefaultKafkaProducerFactory<>(config);

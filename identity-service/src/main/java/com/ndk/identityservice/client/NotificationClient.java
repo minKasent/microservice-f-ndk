@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "notification-service", // loadbalancer sẽ tự động chọn service có thể gọi được vd sau này có thêm
-                                            // notification-service mới
+@FeignClient(name = "notification-service",
+            url = "${services.notification-service.url:}",
     configuration = NotificationClientConfig.class)
 
 public interface NotificationClient {

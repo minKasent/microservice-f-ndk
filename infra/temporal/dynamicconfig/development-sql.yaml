@@ -1,0 +1,7 @@
+# Minimal dynamic config for local Temporal + MySQL
+limit.maxIDLength:
+  - value: 255
+    constraints: {}
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: true
+    constraints: {}

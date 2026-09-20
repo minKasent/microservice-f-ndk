@@ -25,3 +25,8 @@ logging:
     org:
       springframework:
         security: DEBUG
+    com:
+      ndk:
+        identityservice:
+          client:
+            NotificationClient: DEBUG

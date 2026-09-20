@@ -8,6 +8,7 @@
 <!--  SCHEMA, TABLE CHANGE-->
   <include file="db/changelog/ddl/ddl-0001-init-content-tables.xml"/>
   <include file="db/changelog/ddl/ddl-0002-redesign-to-blocks.xml"/>
+  <include file="db/changelog/ddl/ddl-0003-create-processed-saga-commands-table.xml"/>
 
 <!--  DATA CHANGE-->
   <include file="db/changelog/data/data-0001-init-categories.xml"/>

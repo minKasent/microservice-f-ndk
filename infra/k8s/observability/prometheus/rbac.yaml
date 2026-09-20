@@ -1,0 +1,93 @@
+# =============================================================================
+# RBAC Configuration for Prometheus
+# =============================================================================
+# Prometheus cần quyền truy cập Kubernetes API để thực hiện service discovery.
+# Cụ thể, Prometheus cần đọc thông tin về:
+#   - Pods: để discover các pod cần scrape metrics
+#   - Services: để discover services
+#   - Endpoints: để lấy IP:Port của pods
+#   - Nodes: để lấy thông tin node metadata
+#
+# RBAC gồm 3 thành phần:
+#   1. ServiceAccount: Identity cho Prometheus pod
+#   2. ClusterRole: Định nghĩa permissions
+#   3. ClusterRoleBinding: Gán ClusterRole cho ServiceAccount
+# =============================================================================
+
+---
+# =============================================================================
+# ServiceAccount: prometheus
+# =============================================================================
+# Identity mà Prometheus pod sẽ sử dụng khi gọi Kubernetes API
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: devsharing
+
+---
+# =============================================================================
+# ClusterRole: prometheus
+# =============================================================================
+# Định nghĩa các quyền mà Prometheus cần để thực hiện service discovery
+# Sử dụng ClusterRole (không phải Role) vì Prometheus có thể cần
+# discover resources ở nhiều namespace
+# =============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: devsharing
+rules:
+  # Quyền đọc pods, services, endpoints
+  # Cần thiết cho kubernetes_sd_configs với role: pod
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - nodes/metrics
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  
+  # Quyền đọc ingresses (nếu cần scrape ingress controller)
+  - apiGroups: ["extensions", "networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  
+  # Quyền đọc configmaps (nếu cần dynamic config reload)
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["get"]
+
+---
+# =============================================================================
+# ClusterRoleBinding: prometheus
+# =============================================================================
+# Gán ClusterRole "prometheus" cho ServiceAccount "prometheus"
+# trong namespace "devsharing"
+# =============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/part-of: devsharing
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: devsharing

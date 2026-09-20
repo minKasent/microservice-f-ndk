@@ -10,8 +10,11 @@ import com.ndk.purchase.service.PurchaseService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,8 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/purchases")
 @RequiredArgsConstructor
+@Slf4j
 public class PurchaseController {
   private final PurchaseService purchaseService;
+
+  @Value("${purchase.saga.enabled:true}")
+  private boolean sagaEnabled;
   
   @PostMapping
   @PreAuthorize("isAuthenticated()")
@@ -37,7 +44,16 @@ public class PurchaseController {
       @Valid @RequestBody PurchaseContentRequest request
   ) {
     String userId = jwt.getSubject();
+    log.info("Purchase request - BuyerId: {}, ContentId: {}, SagaEnabled: {}", userId, request.getContentId(), sagaEnabled);
+
     PurchaseDto purchase = purchaseService.purchaseContent(userId, request);
+
+    log.info("Purchase processed - BuyerId: {}, ContentId: {}, PurchaseId: {}, Status: {}",
+        userId, request.getContentId(), purchase.getId(), purchase.getStatus());
+
+    if (sagaEnabled) {
+      return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.success(purchase));
+    }
     return ResponseEntity.ok(ApiResponse.success(purchase));
   }
   

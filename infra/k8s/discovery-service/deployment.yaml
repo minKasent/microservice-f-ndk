@@ -1,0 +1,82 @@
+# =============================================================================
+# Deployment: discovery-service (Eureka Server)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: discovery-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: discovery-service
+
+  template:
+    metadata:
+      labels:
+        app: discovery-service
+        app.kubernetes.io/name: discovery-service
+        app.kubernetes.io/part-of: devsharing
+    spec:
+      containers:
+        - name: discovery-service
+          image: devsharing-discovery:2.0.0
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 8761
+              name: http
+
+          envFrom:
+            # ConfigMap riêng của discovery-service (OTEL_SERVICE_NAME)
+            - configMapRef:
+                name: discovery-service-config
+            # ConfigMap OTEL dùng chung (endpoint, protocol, exporters)
+            - configMapRef:
+                name: otel-common-config
+
+          startupProbe:
+            httpGet:
+              path: /eureka/apps
+              port: 8761
+              httpHeaders:
+                - name: Accept
+                  value: application/json
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 30
+
+          livenessProbe:
+            httpGet:
+              path: /eureka/apps
+              port: 8761
+              httpHeaders:
+                - name: Accept
+                  value: application/json
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /eureka/apps
+              port: 8761
+              httpHeaders:
+                - name: Accept
+                  value: application/json
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "150m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"

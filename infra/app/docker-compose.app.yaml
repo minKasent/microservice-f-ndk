@@ -1,0 +1,483 @@
+name: app
+
+services:
+  # ========================================================
+  # 1. Config Server (Cung cấp cấu hình tập trung)
+  # ========================================================
+  config-server:
+    image: devsharing-config-server:${APP_VERSION:-1.0.0}
+    container_name: config-server
+    ports:
+      - "${PORT_CONFIG:-6969}:6969"
+    environment:
+      # Spring Profiles & Search Locations
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+      CONFIG_SEARCH_LOCATIONS: ${CONFIG_SEARCH_LOCATIONS:-file:/app/configs}
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: config-server
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:6969/application/default || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    volumes:
+      - ../../config-server/configs:/app/configs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - config-server
+    restart: unless-stopped
+
+  # ========================================================
+  # 2. Discovery Server (Eureka Server)
+  # ========================================================
+  discovery-server:
+    image: devsharing-discovery:${APP_VERSION:-1.0.0}
+    container_name: discovery-server
+    ports:
+      - "${PORT_DISCOVERY:-8761}:8761"
+    environment:
+      # Spring Profiles & Eureka Server Configuration
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+      EUREKA_SERVER_ENABLE_SELF_PRESERVATION: "${EUREKA_SERVER_ENABLE_SELF_PRESERVATION:-false}"
+      EUREKA_SERVER_EVICTION_INTERVAL_TIMER_IN_MS: ${EUREKA_SERVER_EVICTION_INTERVAL_TIMER_IN_MS:-5000}
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: discovery-server
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/eureka/apps || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - discovery-server
+          - discovery-service
+    restart: unless-stopped
+
+  # ========================================================
+  # 3. API Gateway (Cổng định tuyến duy nhất vào hệ thống)
+  # ========================================================
+  api-gateway:
+    image: devsharing-api-gateway:${APP_VERSION:-1.0.0}
+    container_name: api-gateway
+    ports:
+      - "${PORT_GATEWAY:-8888}:8888"
+    environment:
+      # Spring Profiles & Config Server
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-http://config-server:6969}
+
+      # Eureka Discovery
+      EUREKA_URI: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "${EUREKA_INSTANCE_PREFER_IP_ADDRESS:-true}"
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: api-gateway
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - api-gateway
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ========================================================
+  # 4. Identity Service (Xác thực & Quản lý User)
+  # ========================================================
+  identity-service:
+    image: devsharing-identity:${APP_VERSION:-1.0.0}
+    container_name: identity-service
+    ports:
+      - "${PORT_IDENTITY:-8001}:8001"
+    environment:
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+
+      # Config Server & Eureka Server
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-http://config-server:6969}
+      EUREKA_URI: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "${EUREKA_INSTANCE_PREFER_IP_ADDRESS:-true}"
+
+      # Database MySQL
+      DB_URL: jdbc:mysql://${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306}/identity_service?createDatabaseIfNotExist=true
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: identity-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+
+      # Loki Logstash
+      LOKI_URL: ${LOKI_URL:-http://loki:3100/loki/api/v1/push}
+
+      # OpenAPI / Swagger
+      API_DOCS_SERVER: ${API_GATEWAY_URL:-http://localhost:8888}/identity
+      API_DOCS_SECURITY_ENABLED: "${API_DOCS_SECURITY_ENABLED:-false}"
+      API_DOCS_OAUTH2_AUTH_URL: ${API_DOCS_OAUTH2_AUTH_URL:-http://localhost:8001/oauth2/authorize}
+      API_DOCS_OAUTH2_TOKEN_URL: ${API_DOCS_OAUTH2_TOKEN_URL:-http://localhost:8001/oauth2/token}
+      API_DOCS_SECURITY_BASIC_USER: ${API_DOCS_SECURITY_BASIC_USER:-docs}
+      API_DOCS_SECURITY_BASIC_PASSWORD: ${API_DOCS_SECURITY_BASIC_PASSWORD:-docs}
+
+      # Feign Client Timeouts & Internal Credentials
+      FEIGN_CLIENT_NOTIFICATION_CONNECT_TIMEOUT: ${FEIGN_CLIENT_CONNECT_TIMEOUT:-5000}
+      FEIGN_CLIENT_NOTIFICATION_READ_TIMEOUT: ${FEIGN_CLIENT_READ_TIMEOUT:-5000}
+      INTERNAL_NOTIFICATION_SERVICE_CREDENTIALS_USER: ${INTERNAL_CREDENTIALS_USER:-user}
+      INTERNAL_NOTIFICATION_SERVICE_CREDENTIALS_PASSWORD: ${INTERNAL_CREDENTIALS_PASSWORD:-password}
+      INTERNAL_CREDIT_SERVICE_CREDENTIALS_USER: ${INTERNAL_CREDENTIALS_USER:-user}
+      INTERNAL_CREDIT_SERVICE_CREDENTIALS_PASSWORD: ${INTERNAL_CREDENTIALS_PASSWORD:-password}
+
+      # JWT Configuration
+      JWT_AUTO_KEYGEN: "${JWT_AUTO_KEYGEN:-true}"
+      JWT_KEY_ID: ${JWT_KEY_ID:-dev-jwt-external}
+      JWT_PUBLIC_KEY_PATH: ${JWT_PUBLIC_KEY_PATH:-/tmp/public.pem}
+      JWT_PRIVATE_KEY_PATH: ${JWT_PRIVATE_KEY_PATH:-/tmp/private.pem}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8001/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - identity-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ========================================================
+  # 5. Notification Service (Thông báo Email, SMS & Kafka)
+  # ========================================================
+  notification-service:
+    image: devsharing-notification:${APP_VERSION:-1.0.0}
+    container_name: notification-service
+    ports:
+      - "${PORT_NOTIFICATION:-8004}:8004"
+    environment:
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+
+      # Config Server & Eureka Server
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-http://config-server:6969}
+      EUREKA_URI: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "${EUREKA_INSTANCE_PREFER_IP_ADDRESS:-true}"
+
+      # Database MySQL & MongoDB
+      DB_URL: jdbc:mysql://${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306}/notification_service?createDatabaseIfNotExist=true
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      MONGO_DB_URI: mongodb://${MONGO_USER:-root}:${MONGO_PASSWORD:-password}@${MONGO_HOST:-mongodb}:${MONGO_PORT:-27017}/notification_service?authSource=admin
+
+      # Kafka Broker & Compression
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:19092}
+      KAFKA_COMPRESSION_TYPE: ${KAFKA_COMPRESSION_TYPE:-none}
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: notification-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+
+      # Loki Logstash
+      LOKI_URL: ${LOKI_URL:-http://loki:3100/loki/api/v1/push}
+
+      # OpenAPI / Swagger
+      API_DOCS_SERVER: ${API_GATEWAY_URL:-http://localhost:8888}/notification
+      API_DOCS_SECURITY_ENABLED: "${API_DOCS_SECURITY_ENABLED:-false}"
+      API_DOCS_OAUTH2_AUTH_URL: ${API_DOCS_OAUTH2_AUTH_URL:-http://localhost:8001/oauth2/authorize}
+      API_DOCS_OAUTH2_TOKEN_URL: ${API_DOCS_OAUTH2_TOKEN_URL:-http://localhost:8001/oauth2/token}
+      API_DOCS_SECURITY_BASIC_USER: ${API_DOCS_SECURITY_BASIC_USER:-docs}
+      API_DOCS_SECURITY_BASIC_PASSWORD: ${API_DOCS_SECURITY_BASIC_PASSWORD:-docs}
+
+      # Basic Auth Credentials
+      BASIC_CREDENTIALS_USER: ${INTERNAL_CREDENTIALS_USER:-user}
+      BASIC_CREDENTIALS_PASSWORD: ${INTERNAL_CREDENTIALS_PASSWORD:-password}
+
+      # OAuth2 Resource Server
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://identity-service:8001/oauth2/jwks}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8004/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - notification-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ========================================================
+  # 6. Credit Service (Quản lý số dư, nạp rút, xu)
+  # ========================================================
+  credit-service:
+    image: devsharing-credit:${APP_VERSION:-1.0.0}
+    container_name: credit-service
+    ports:
+      - "${PORT_CREDIT:-8002}:8002"
+    environment:
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+
+      # Config Server & Eureka Server
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-http://config-server:6969}
+      EUREKA_URI: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "${EUREKA_INSTANCE_PREFER_IP_ADDRESS:-true}"
+
+      # Database MySQL
+      DB_URL: jdbc:mysql://${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306}/credit_service?createDatabaseIfNotExist=true
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: credit-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+
+      # Loki Logstash
+      LOKI_URL: ${LOKI_URL:-http://loki:3100/loki/api/v1/push}
+
+      # OpenAPI / Swagger
+      API_DOCS_SERVER: ${API_GATEWAY_URL:-http://localhost:8888}/credit
+      API_DOCS_SECURITY_ENABLED: "${API_DOCS_SECURITY_ENABLED:-false}"
+      API_DOCS_OAUTH2_AUTH_URL: ${API_DOCS_OAUTH2_AUTH_URL:-http://localhost:8001/oauth2/authorize}
+      API_DOCS_OAUTH2_TOKEN_URL: ${API_DOCS_OAUTH2_TOKEN_URL:-http://localhost:8001/oauth2/token}
+      API_DOCS_SECURITY_BASIC_USER: ${API_DOCS_SECURITY_BASIC_USER:-docs}
+      API_DOCS_SECURITY_BASIC_PASSWORD: ${API_DOCS_SECURITY_BASIC_PASSWORD:-docs}
+
+      # Basic Auth Credentials
+      BASIC_CREDENTIALS_USER: ${INTERNAL_CREDENTIALS_USER:-user}
+      BASIC_CREDENTIALS_PASSWORD: ${INTERNAL_CREDENTIALS_PASSWORD:-password}
+
+      # OAuth2 Resource Server
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://identity-service:8001/oauth2/jwks}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8002/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - credit-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ========================================================
+  # 7. Content Service (Quản lý nội dung, bài viết, tài liệu)
+  # ========================================================
+  content-service:
+    image: devsharing-content:${APP_VERSION:-1.0.0}
+    container_name: content-service
+    ports:
+      - "${PORT_CONTENT:-8003}:8003"
+    environment:
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+
+      # Config Server & Eureka Server
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-http://config-server:6969}
+      EUREKA_URI: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "${EUREKA_INSTANCE_PREFER_IP_ADDRESS:-true}"
+
+      # Database MySQL
+      DB_URL: jdbc:mysql://${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306}/content_service?createDatabaseIfNotExist=true
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: content-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+
+      # Loki Logstash
+      LOKI_URL: ${LOKI_URL:-http://loki:3100/loki/api/v1/push}
+
+      # OpenAPI / Swagger
+      API_DOCS_SERVER: ${API_GATEWAY_URL:-http://localhost:8888}/content
+      API_DOCS_SECURITY_ENABLED: "${API_DOCS_SECURITY_ENABLED:-false}"
+      API_DOCS_OAUTH2_AUTH_URL: ${API_DOCS_OAUTH2_AUTH_URL:-http://localhost:8001/oauth2/authorize}
+      API_DOCS_OAUTH2_TOKEN_URL: ${API_DOCS_OAUTH2_TOKEN_URL:-http://localhost:8001/oauth2/token}
+      API_DOCS_SECURITY_BASIC_USER: ${API_DOCS_SECURITY_BASIC_USER:-docs}
+      API_DOCS_SECURITY_BASIC_PASSWORD: ${API_DOCS_SECURITY_BASIC_PASSWORD:-docs}
+
+      # OAuth2 Resource Server
+      OAUTH2_ISSUER_URI: ${OAUTH2_ISSUER_URI:-http://identity-service:8001}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://identity-service:8001/oauth2/jwks}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8003/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - content-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ========================================================
+  # 8. Purchase Service (Giao dịch mua bán khóa học, nội dung)
+  # ========================================================
+  purchase-service:
+    image: devsharing-purchase:${APP_VERSION:-1.0.0}
+    container_name: purchase-service
+    ports:
+      - "${PORT_PURCHASE:-8006}:8006"
+    environment:
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-swagger,loki}
+
+      # Config Server & Eureka Server
+      SPRING_CLOUD_CONFIG_URI: ${SPRING_CLOUD_CONFIG_URI:-http://config-server:6969}
+      EUREKA_URI: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_URI:-http://discovery-server:8761/eureka}
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "${EUREKA_INSTANCE_PREFER_IP_ADDRESS:-true}"
+
+      # Database MySQL
+      DB_URL: jdbc:mysql://${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306}/purchase_service?createDatabaseIfNotExist=true
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+
+      # OpenTelemetry Tracing
+      OTEL_SERVICE_NAME: purchase-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://tempo:4317}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_PROPAGATORS: ${OTEL_PROPAGATORS:-tracecontext,baggage}
+
+      # Loki Logstash
+      LOKI_URL: ${LOKI_URL:-http://loki:3100/loki/api/v1/push}
+
+      # OpenAPI / Swagger
+      API_DOCS_SERVER: ${API_GATEWAY_URL:-http://localhost:8888}/purchase
+      API_DOCS_SECURITY_ENABLED: "${API_DOCS_SECURITY_ENABLED:-false}"
+      API_DOCS_OAUTH2_AUTH_URL: ${API_DOCS_OAUTH2_AUTH_URL:-http://localhost:8001/oauth2/authorize}
+      API_DOCS_OAUTH2_TOKEN_URL: ${API_DOCS_OAUTH2_TOKEN_URL:-http://localhost:8001/oauth2/token}
+      API_DOCS_SECURITY_BASIC_USER: ${API_DOCS_SECURITY_BASIC_USER:-docs}
+      API_DOCS_SECURITY_BASIC_PASSWORD: ${API_DOCS_SECURITY_BASIC_PASSWORD:-docs}
+
+      # OAuth2 Resource Server
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://identity-service:8001/oauth2/jwks}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8006/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      microservice-f-network:
+        aliases:
+          - purchase-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      credit-service:
+        condition: service_healthy
+      content-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  microservice-f-network:
+    name: ${DOCKER_NETWORK_NAME:-infra_microservice-f-network}
+    external: true

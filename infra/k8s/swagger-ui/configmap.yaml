@@ -1,0 +1,69 @@
+# =============================================================================
+# ConfigMap: swagger-ui (API Documentation UI)
+# =============================================================================
+# Swagger UI tổng hợp tất cả API docs của các microservice vào một giao diện
+# duy nhất, giúp developer dễ dàng test và khám phá API.
+#
+# Thay vì hardcode danh sách URLs, ta tách thành các biến môi trường riêng
+# để dễ dàng thêm/bớt service mà không cần sửa JSON phức tạp.
+#
+# Swagger UI sẽ tự động parse và merge các URL này thành URLS array.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swagger-ui-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: swagger-ui
+    app.kubernetes.io/part-of: devsharing
+data:
+  # Base URL path cho Swagger UI
+  BASE_URL: "/swagger-ui"
+
+  # Bật OAuth2 Basic Authentication
+  OAUTH_USE_BASIC_AUTH: "true"
+
+  # Bật PKCE (Proof Key for Code Exchange) cho OAuth2
+  OAUTH_USE_PKCE: "true"
+
+  # Gateway URL — tất cả API đều truy cập qua API Gateway
+  # Trong K8s local k3d, truy cập qua NodePort 30888 trên localhost
+  # Nếu deploy production, đổi thành domain thực tế (ví dụ: https://api.devsharing.com)
+  GATEWAY_URL: "http://localhost:30888"
+
+  # Danh sách API Docs endpoints của từng service
+  # Format: <service-name>/v3/api-docs
+  # Swagger UI sẽ gọi vào các endpoint này để lấy OpenAPI spec
+
+  # Credit Service API Docs
+  API_DOCS_CREDIT_URL: "/credit/v3/api-docs"
+  API_DOCS_CREDIT_NAME: "Credit service"
+
+  # Content Service API Docs
+  API_DOCS_CONTENT_URL: "/content/v3/api-docs"
+  API_DOCS_CONTENT_NAME: "Content service"
+
+  # Identity Service API Docs
+  API_DOCS_IDENTITY_URL: "/identity/v3/api-docs"
+  API_DOCS_IDENTITY_NAME: "Identity service"
+
+  # Mentoring Service API Docs (nếu có)
+  API_DOCS_MENTORING_URL: "/mentoring/v3/api-docs"
+  API_DOCS_MENTORING_NAME: "Mentoring service"
+
+  # Notification Service API Docs
+  API_DOCS_NOTIFICATION_URL: "/notification/v3/api-docs"
+  API_DOCS_NOTIFICATION_NAME: "Notification service"
+
+  # Purchase Service API Docs
+  API_DOCS_PURCHASE_URL: "/purchase/v3/api-docs"
+  API_DOCS_PURCHASE_NAME: "Purchase service"
+
+  # Rating Service API Docs (nếu có)
+  API_DOCS_RATING_URL: "/rating/v3/api-docs"
+  API_DOCS_RATING_NAME: "Rating service"
+
+  # Reporting Service API Docs (nếu có)
+  API_DOCS_REPORTING_URL: "/reporting/v3/api-docs"
+  API_DOCS_REPORTING_NAME: "Reporting service"

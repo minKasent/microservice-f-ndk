@@ -17,6 +17,7 @@ import com.ndk.identityservice.entity.UserRole;
 import com.ndk.identityservice.entity.UserStatus;
 import com.ndk.identityservice.entity.UserVerification;
 import com.ndk.identityservice.exception.ExceptionEnum;
+import com.ndk.identityservice.infra.trace.SpanHelper;
 import com.ndk.identityservice.mapper.UserRegistrationMapper;
 import com.ndk.identityservice.model.UserAccountVerificationChannel;
 import com.ndk.identityservice.repository.RoleRepository;
@@ -24,6 +25,12 @@ import com.ndk.identityservice.repository.UserRepository;
 import com.ndk.identityservice.repository.UserRoleRepository;
 import com.ndk.identityservice.repository.UserVerificationRepository;
 import com.ndk.identityservice.service.UserAccountService;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -38,6 +45,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class UserAccountServiceImpl implements UserAccountService {
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final RoleRepository roleRepository;
@@ -52,25 +60,42 @@ public class UserAccountServiceImpl implements UserAccountService {
   public UserRegistrationResponseDto registerUser(UserRegistrationDto userRegistrationDto) {
     log.info("Registering user: {}", userRegistrationDto.getUsername());
 
-    // default role consumer
-    Role consumerRole = getConsumnerRole();
-    // check trùng username
-    validateUsernameExisted(userRegistrationDto.getUsername());
+    Tracer tracer = GlobalOpenTelemetry.getTracer(this.getClass().getName());
 
-    // create user and role
-    User savedUser = createAndSaveUser(userRegistrationDto);
-    assignRoleToUser(savedUser, consumerRole);
-    sendEmailVerification(savedUser);
+    User savedUser = SpanHelper.runInSpan(
+        tracer.spanBuilder("registerUser.createUserEntity")
+            .setAttribute("user.username", userRegistrationDto.getUsername())
+            .setAttribute("user.email", userRegistrationDto.getEmail())
+            .startSpan(),
+        () -> {
+          Role consumerRole = getConsumnerRole();
+          validateUsernameExisted(userRegistrationDto.getUsername());
+          User user = createAndSaveUser(userRegistrationDto);
+          assignRoleToUser(user, consumerRole);
+          return user;
+        }
+    );
 
-    log.info("Registering user Done: {}", userRegistrationDto.getUsername());
+    SpanHelper.runInSpan(
+        tracer.spanBuilder("registerUser.sendEmailVerification")
+            .setAttribute("user.username", userRegistrationDto.getUsername())
+            .setAttribute("user.email", userRegistrationDto.getEmail())
+            .startSpan(),
+        () -> {
+          sendEmailVerification(savedUser);
+          return null;
+        }
+    );
 
-    return userRegistrationMapper.toResponseDto(savedUser);// return responseDto khi đã mapping
+    log.info("Registering user done: {}", userRegistrationDto.getUsername());
+    return userRegistrationMapper.toResponseDto(savedUser);
   }
 
   @Override
   @Transactional
   public void verifyEmail(String verificationCode) {
-    UserVerification verification = userVerificationRepository.findByVerificationCode(verificationCode)
+    UserVerification verification = userVerificationRepository.findByVerificationCode(
+            verificationCode)
         .orElseThrow(() -> new DevSharingException(
             ExceptionEnum.USER_VERIFICATION_CODE_NOT_FOUND_ERROR,
             new Object[]{verificationCode}));
@@ -102,7 +127,7 @@ public class UserAccountServiceImpl implements UserAccountService {
   }
 
   /**
-   * Create wallet for user in credit-service after email verification.
+   * Create a wallet for a user in credit-service after email verification.
    */
   private void createWalletForUser(User user) {
     try {
@@ -114,8 +139,11 @@ public class UserAccountServiceImpl implements UserAccountService {
       // Don't fail verification if wallet creation fails
     }
   }
-
+  
+  @WithSpan
   private void sendEmailVerification(User user) {
+    Span span = Span.current();
+    span.setAttribute("username", user.getUsername());
     try {
       UserVerification userVerification = new UserVerification();
       userVerification.setUser(user);
@@ -138,7 +166,7 @@ public class UserAccountServiceImpl implements UserAccountService {
           .content(verificationEmailContent)
           .build();
       notificationClient.sendNotification(request);
-    }catch (Exception e) {
+    } catch (Exception e) {
       log.error("Error sending email verification: [{}] | mail: [{}] | msg: [{}] ",
           user.getEmail(),
           user.getUsername(),
@@ -153,15 +181,17 @@ public class UserAccountServiceImpl implements UserAccountService {
   private void validateUsernameExisted(String username) throws DevSharingException {
     User userExisted = userRepository.findByUsername(username).orElse(null);
     if (userExisted != null) {
-      throw new DevSharingException(USERNAME_EXISTED_ERROR,new Object[] {username});
+      throw new DevSharingException(USERNAME_EXISTED_ERROR, new Object[]{username});
     }
   }
+
   private Role getConsumnerRole() {
     return roleRepository
         .findByRoleName(RoleEnum.CONSUMER)
         .orElseThrow(() ->
             new RuntimeException("Could not find consumer role "));
   }
+
   private User createAndSaveUser(UserRegistrationDto userRegistrationDto) {
     User user = new User();
     user.setUsername(userRegistrationDto.getUsername());
@@ -174,6 +204,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     user.setStatus(UserStatus.PENDING_ACTIVE);
     return userRepository.save(user);
   }
+
   private void assignRoleToUser(User user, Role role) {
     UserRole userRole = new UserRole();
     userRole.setUser(user);

@@ -1,7 +1,3 @@
-# Infra for Microservice-F (synced from Chapter 11, Windows-friendly)
-# MySQL: keep using your local MySQL on :3306 (already running).
-# Uncomment the mysql service only if you stop local MySQL first.
-
 services:
   api-docs:
     image: swaggerapi/swagger-ui:v5.32.9
@@ -25,6 +21,47 @@ services:
       - microservice-f-network
     restart: unless-stopped
 
+  mysql:
+    container_name: mysql
+    image: mysql:8
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Tự động tạo các database (identity_service, content_service, credit_service, v.v.)
+      - ../scripts/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
   kafka:
     image: apache/kafka:latest
     container_name: kafka
@@ -32,6 +69,7 @@ services:
     ports:
       - "9092:9092"
       - "9093:9093"
+      - "29092:29092"
     networks:
       - microservice-f-network
     user: root
@@ -39,9 +77,9 @@ services:
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:19092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:19092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:19092,PLAINTEXT_K8S://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:19092,PLAINTEXT_K8S://172.23.0.1:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,PLAINTEXT_K8S:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
@@ -67,6 +105,12 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
       - kafka-logs:/opt/kafka/logs
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -86,27 +130,14 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
       DYNAMIC_CONFIG_ENABLED: 'true'
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     restart: unless-stopped
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-
-  mongodb:
-    image: mongo:7
-    container_name: mongodb
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb-data:/data/db
-    networks:
-      - microservice-f-network
-    restart: unless-stopped
 
   loki:
     image: grafana/loki:2.9.3
@@ -117,6 +148,55 @@ services:
     volumes:
       - ./loki-config.yaml:/etc/loki/local-config.yaml
       - loki-data:/loki
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: tempo
+    command: -config.file=/etc/tempo-config.yml
+    ports:
+      # UI/query port mapped to host 3110 (OTLP 4317 nhận qua Alloy nội bộ mạng docker)
+      - "3110:3100"
+      - "9095:9095"
+    volumes:
+      - ./tempo.yml:/etc/tempo-config.yml
+    networks:
+      - microservice-f-network
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:v1.3.1
+    container_name: alloy
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy
+      - alloy-data:/var/lib/alloy/data
+    ports:
+      - "12345:12345"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - microservice-f-network
+    depends_on:
+      - tempo
+      - loki
+      - prometheus
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.enable-remote-write-receiver"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - microservice-f-network
     restart: unless-stopped
@@ -141,53 +221,41 @@ services:
       - microservice-f-network
     restart: unless-stopped
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
+  # Temporal workflow engine — dùng chung MySQL ở trên (DB: temporal, temporal_visibility)
+  temporal:
+    image: temporalio/auto-setup:1.27.2
+    container_name: temporal
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB: mysql8
+      DB_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PWD: root
+      MYSQL_SEEDS: mysql
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
     ports:
-      - "9090:9090"
+      - "7233:7233"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
     networks:
       - microservice-f-network
     restart: unless-stopped
 
-  tempo:
-    image: grafana/tempo:2.7.2
-    container_name: tempo
-    command: -config.file=/etc/tempo-config.yml
+  temporal-ui:
+    image: temporalio/ui:2.34.0
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:3000
     ports:
-      # UI/query port mapped to host 3110; OTLP gRPC for javaagent = localhost:4317
-      - "3110:3100"
-      - "4317:4317"
-      - "9095:9095"
-    volumes:
-      - ./tempo.yml:/etc/tempo-config.yml
+      - "8233:8080"
     networks:
       - microservice-f-network
     restart: unless-stopped
-
-  # OpenTelemetry Java Agent (host-side): infra/otel/opentelemetry-javaagent.jar
-  # IntelliJ VM options: see infra/otel/vm-options.example.txt
-  # Or: pwsh infra/otel/run-with-otel.ps1 -JarPath ... -ServiceName purchase-service
-
-  # Uncomment only after stopping local MySQL on port 3306:
-  # mysql:
-  #   container_name: mysql
-  #   image: mysql:8
-  #   ports:
-  #     - "3306:3306"
-  #   volumes:
-  #     - mysql-data:/var/lib/mysql
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: root
-  #   networks:
-  #     - microservice-f-network
-  #   restart: unless-stopped
 
 networks:
   microservice-f-network:
@@ -199,4 +267,5 @@ volumes:
   mongodb-data:
   loki-data:
   grafana-data:
-  # mysql-data:
+  mysql-data:
+  alloy-data:

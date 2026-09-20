@@ -1,0 +1,13 @@
+description: should return user balance
+request:
+  method: GET
+  url: /api/v1/wallets/balance/user-123
+response:
+  status: 200
+  headers:
+    Content-Type: application/json
+  body:
+    status: SUCCESS
+    data:
+      userId: user-123
+      balance: 100.00

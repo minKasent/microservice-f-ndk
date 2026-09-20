@@ -1,0 +1,33 @@
+# =============================================================================
+# Service: notification-service — Type: ClusterIP
+# =============================================================================
+# Notification Service chỉ cần truy cập nội bộ — các service khác gọi vào
+# thông qua Eureka hoặc Feign client. Không cần expose ra ngoài.
+#
+# DNS nội bộ:
+#   - http://notification-service.devsharing.svc.cluster.local:8080
+#   - http://notification-service.devsharing.svc.cluster.local:8004 (legacy mapping)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: devsharing
+spec:
+  type: ClusterIP
+
+  selector:
+    app: notification-service
+
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: legacy
+      port: 8004
+      targetPort: 8080
+      protocol: TCP

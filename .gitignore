@@ -4,6 +4,7 @@
 *.iml
 *.iws
 *.ipr
+.claude/
 
 # Build
 **/target/
@@ -18,6 +19,12 @@ logs/
 keys/*.pem
 .env
 .env.*
+
+# Python
+**/.venv/
+**/.venv-win/
+**/__pycache__/
+*.pyc
 
 # OS
 .DS_Store

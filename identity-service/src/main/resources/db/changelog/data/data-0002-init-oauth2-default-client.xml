@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="data-0002-insert-default-oidc-client" author="khoand01">
+    <preConditions onFail="MARK_RAN" onError="HALT">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM oauth2_clients WHERE client_id = 'oidc-client'
+      </sqlCheck>
+    </preConditions>
+
+    <insert tableName="oauth2_clients">
+      <column name="id" valueNumeric="1"/>
+      <column name="client_id" value="oidc-client"/>
+      <column name="client_secret" value="{noop}secret"/>
+      <column name="client_name" value="Swagger UI Client"/>
+      <column name="description" value="Default OAuth2 client for Swagger UI and local development"/>
+      <column name="require_authorization_consent" valueBoolean="false"/>
+      <column name="require_proof_key" valueBoolean="false"/>
+      <column name="access_token_time_to_live" valueNumeric="3600"/>
+      <column name="refresh_token_time_to_live" valueNumeric="86400"/>
+      <column name="is_active" valueBoolean="true"/>
+      <column name="created_at" valueDate="NOW()"/>
+      <column name="updated_at" valueDate="NOW()"/>
+    </insert>
+
+    <insert tableName="oauth2_client_auth_methods">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="auth_method" value="client_secret_basic"/>
+    </insert>
+    <insert tableName="oauth2_client_auth_methods">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="auth_method" value="client_secret_post"/>
+    </insert>
+    <insert tableName="oauth2_client_auth_methods">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="auth_method" value="none"/>
+    </insert>
+
+    <insert tableName="oauth2_client_grant_types">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="grant_type" value="authorization_code"/>
+    </insert>
+    <insert tableName="oauth2_client_grant_types">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="grant_type" value="refresh_token"/>
+    </insert>
+    <insert tableName="oauth2_client_grant_types">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="grant_type" value="client_credentials"/>
+    </insert>
+
+    <insert tableName="oauth2_client_scopes">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="scope" value="openid"/>
+    </insert>
+    <insert tableName="oauth2_client_scopes">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="scope" value="profile"/>
+    </insert>
+
+    <insert tableName="oauth2_client_redirect_uris">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="redirect_uri" value="http://localhost:8080/swagger-ui/oauth2-redirect.html"/>
+    </insert>
+    <insert tableName="oauth2_client_redirect_uris">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="redirect_uri" value="http://127.0.0.1:8080/swagger-ui/oauth2-redirect.html"/>
+    </insert>
+    <insert tableName="oauth2_client_redirect_uris">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="redirect_uri" value="http://localhost:8888/identity/swagger-ui/oauth2-redirect.html"/>
+    </insert>
+    <insert tableName="oauth2_client_redirect_uris">
+      <column name="client_id" valueNumeric="1"/>
+      <column name="redirect_uri" value="http://localhost:8001/swagger-ui/oauth2-redirect.html"/>
+    </insert>
+  </changeSet>
+
+</databaseChangeLog>

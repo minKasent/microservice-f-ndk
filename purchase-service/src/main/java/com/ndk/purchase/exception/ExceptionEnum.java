@@ -12,6 +12,7 @@ public enum ExceptionEnum implements DevSharingExceptionInfo {
   CONTENT_ALREADY_OWNED("PURCHASE_002", "error.purchase.contentAlreadyOwned", HttpStatus.CONFLICT),
   INSUFFICIENT_CREDIT("PURCHASE_003", "error.purchase.insufficientCredit", HttpStatus.BAD_REQUEST),
   PURCHASE_FAILED("PURCHASE_004", "error.purchase.failed", HttpStatus.INTERNAL_SERVER_ERROR),
+  PURCHASE_ALREADY_IN_PROGRESS("PURCHASE_005", "error.purchase.alreadyInProgress", HttpStatus.CONFLICT),
   
   CONTENT_NOT_FOUND("CONTENT_001", "error.content.notFound", HttpStatus.NOT_FOUND),
   CONTENT_NOT_AVAILABLE("CONTENT_002", "error.content.notAvailable", HttpStatus.BAD_REQUEST),

@@ -1,0 +1,33 @@
+apiVersion: v1                 # (1) API version – Pod thuộc core API group, version v1
+kind: Pod                      # (2) Loại object – đây là một Pod
+metadata:
+  name: kiada                  # (3) Tên của Pod – duy nhất trong namespace
+  labels:                      # (4) Labels – cặp key-value để tổ chức và chọn Pods
+    app: kiada
+    rel: stable
+spec:                          # (5) Spec – mô tả trạng thái mong muốn của Pod
+  containers:                  # (6) Danh sách các containers trong Pod
+  - name: identity             # (7) Tên container – duy nhất trong Pod
+    image: luksa/kiada:0.1     # (8) Container image
+    ports:
+    - name: http               # (9) Đặt tên cho port – giúp tham chiếu dễ hơn
+      containerPort: 8080      # (10) Port mà container lắng nghe
+  #   env:
+  #   - name: POD_NAME           # (11) Biến môi trường
+  #     valueFrom:
+  #       fieldRef:
+  #         fieldPath: metadata.name # (12) Inject metadata của Pod vào biến môi trường
+  #   resources:                 # (13) Yêu cầu tài nguyên – QUAN TRỌNG!
+  #     requests:
+  #       cpu: "100m"            # (14) CPU request: 100 millicores = 0.1 CPU
+  #       memory: "128Mi"        # (15) Memory request: 128 MiB
+  #     limits:
+  #       cpu: "500m"            # (16) CPU limit: 500 millicores = 0.5 CPU
+  #       memory: "256Mi"        # (17) Memory limit: 256 MiB
+  #   volumeMounts:
+  #   - name: data               # (18) Tham chiếu tên volume bên dưới
+  #     mountPath: /data         # (19) Mount vào đường dẫn này trong container
+  # volumes:                     # (20) Khai báo volumes ở cấp Pod
+  # - name: data                 # (21) Tên volume – containers tham chiếu tên này
+  #   emptyDir: {}               # (22) Volume rỗng, sống cùng Pod, mất khi Pod bị xóa
+ 

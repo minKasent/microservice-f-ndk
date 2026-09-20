@@ -17,6 +17,24 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: credit-saga-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: manual
+
   security:
     oauth2:
       resource-server:
@@ -27,3 +45,7 @@ basic:
   credentials:
     username: ${BASIC_CREDENTIALS_USER}
     password: ${BASIC_CREDENTIALS_PASSWORD}
+
+purchase:
+  saga:
+    credit-command-topic: purchase.credit-command

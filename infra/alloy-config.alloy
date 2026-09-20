@@ -1,0 +1,52 @@
+// =============================================================================
+// Grafana Alloy Config (River syntax)
+// Pipeline: Apps / K8s -> Alloy (OTLP 4317/4318) -> Tempo / Loki / Prometheus
+// =============================================================================
+
+// Nhận OTLP Traces, Metrics, Logs
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces  = [otelcol.exporter.otlp.tempo.input]
+    metrics = [otelcol.exporter.prometheus.default.input]
+    logs    = [otelcol.exporter.loki.default.input]
+  }
+}
+
+// 1. Forward Traces sang Tempo
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// 2. Forward Metrics sang Prometheus
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.local.receiver]
+}
+
+prometheus.remote_write "local" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+
+// 3. Forward Logs sang Loki
+otelcol.exporter.loki "default" {
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

@@ -1,11 +1,28 @@
 eureka:
   client:
+    enabled: ${EUREKA_ENABLED:false}
     fetch-registry: true
     register-with-eureka: true
     service-url:
       defaultZone: ${EUREKA_URI}
   instance:
     prefer-ip-address: true
+
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          notification-service:
+            url: ${FEIGN_NOTIFICATION_URL:http://notification-service:8004}
+          credit-service:
+            url: ${FEIGN_CREDIT_URL:http://credit-service:8002}
+          content-service:
+            url: ${FEIGN_CONTENT_URL:http://content-service:8003}
+          purchase-service:
+            url: ${FEIGN_PURCHASE_URL:http://purchase-service:8006}
+          identity-service:
+            url: ${FEIGN_IDENTITY_URL:http://identity-service:8001}
 
 logging:
   loki:

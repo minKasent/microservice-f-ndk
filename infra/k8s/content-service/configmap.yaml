@@ -1,0 +1,45 @@
+# =============================================================================
+# ConfigMap: content-service
+# =============================================================================
+# Content Service quản lý nội dung của hệ thống devsharing:
+#   - Khóa học (courses), bài học (lessons), chương học (chapters)
+#   - Upload và quản lý media/video
+#   - Tìm kiếm nội dung
+#
+# Service này chỉ truy cập MySQL, không có dependency đặc biệt như
+# Kafka hay MongoDB như notification-service.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: content-service-config
+  namespace: devsharing
+  labels:
+    app.kubernetes.io/name: content-service
+    app.kubernetes.io/part-of: devsharing
+data:
+  # Tên service này trong hệ thống OTEL tracing
+  OTEL_SERVICE_NAME: "content-service"
+
+  # Port nội bộ của container
+  SERVER_PORT: "8080"
+
+  # Spring profile đang active
+  SPRING_PROFILES_ACTIVE: "swagger"
+
+  # Bật/tắt bảo mật trên Swagger UI (OAuth2 integration)
+  API_DOCS_SECURITY_ENABLED: "false"
+
+  # Path suffix cho API Docs
+  # Sẽ được compose với BASE_GATEWAY_URL từ base-urls-config
+  API_DOCS_PATH: "/content"
+
+  # OAuth2 endpoint paths
+  # Sẽ được compose với BASE_IDENTITY_URL từ base-urls-config
+  OAUTH2_AUTHORIZE_PATH: "/oauth2/authorize"
+  OAUTH2_TOKEN_PATH: "/oauth2/token"
+
+  # URL JDBC kết nối MySQL (chạy trên host machine qua Docker bridge 172.23.0.1)
+  DB_URL: "jdbc:mysql://172.23.0.1:3306/content_service?createDatabaseIfNotExist=true"
+  DB_USER: "root"
+  DB_PASSWORD: "root"

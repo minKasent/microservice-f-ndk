@@ -46,8 +46,13 @@ public class EmailProvider implements NotificationProvider {
   }
 
   private void sendViaSendGrid(NotificationMessage message) {
-    log.debug("Sending Email via SendGrid to: {}", message.getRecipient());
-    // TODO: Implement actual SendGrid API integration
+    log.info("================================================================================");
+    log.info(">>>>> [EMAIL VERIFICATION DISPATCHED]");
+    log.info(">>>>> To: {}", message.getRecipient());
+    log.info(">>>>> Subject: {}", message.getSubject());
+    log.info(">>>>> Verification Code / Content: {}", message.getContent());
+    log.info("================================================================================");
+    // TODO: Implement actual SendGrid / SMTP API integration
   }
 
   private NotificationHistory saveHistory(NotificationMessage message, NotificationStatus status) {
